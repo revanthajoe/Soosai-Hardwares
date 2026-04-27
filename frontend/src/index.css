@@ -1,0 +1,150 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap');
+
+/* Light Theme (Default) */
+:root {
+  --bg-top: #f5fff9;
+  --bg-bottom: #e8f6ee;
+  --text: #17382e;
+  --heading: #0d2d24;
+  --bg-primary: #ffffff;
+  --bg-secondary: #f0f8f4;
+  --border-color: rgba(8, 56, 40, 0.12);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 16px 34px rgba(10, 58, 45, 0.28);
+  --accent: #0b7a54;
+  --accent-light: #e8f6ee;
+  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark Theme */
+:root[data-theme="dark"] {
+  --bg-top: #0f1419;
+  --bg-bottom: #1a1f27;
+  --text: #e0e6e9;
+  --heading: #f5f7fa;
+  --bg-primary: #1e2329;
+  --bg-secondary: #2a2f37;
+  --border-color: rgba(255, 255, 255, 0.1);
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 16px 34px rgba(0, 0, 0, 0.5);
+  --accent: #00d084;
+  --accent-light: rgba(0, 208, 132, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  font-family: 'IBM Plex Sans', sans-serif;
+  background: var(--bg-top);
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(218, 246, 230, 0.4) 0%, transparent 45%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+  transition: var(--transition);
+}
+
+:root[data-theme="dark"] body {
+  background-image: 
+    radial-gradient(circle at 0% 0%, rgba(0, 208, 132, 0.05) 0%, transparent 45%),
+    linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
+}
+
+#root {
+  min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--heading);
+}
+
+/* Global Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.loading-skeleton {
+  height: 200px;
+  background: linear-gradient(
+    90deg,
+    var(--bg-secondary) 25%,
+    var(--bg-primary) 50%,
+    var(--bg-secondary) 75%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+  border-radius: 8px;
+}
+
