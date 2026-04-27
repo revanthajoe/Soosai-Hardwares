@@ -24,9 +24,16 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor': ['react', 'react-dom', 'react-router-dom'],
-          'motion': ['framer-motion'],
+        manualChunks: (id) => {
+          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            return 'vendor-react';
+          }
+          if (id.includes('node_modules/react-router-dom')) {
+            return 'vendor-router';
+          }
+          if (id.includes('node_modules/framer-motion')) {
+            return 'vendor-motion';
+          }
         },
       },
     },

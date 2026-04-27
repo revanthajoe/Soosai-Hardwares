@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { Suspense } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/layout/Footer';
@@ -13,10 +13,6 @@ import AdminDashboardPage from './pages/AdminDashboardPage';
 import ProductFormPage from './pages/ProductFormPage';
 import NotFoundPage from './pages/NotFoundPage';
 import './App.css';
-
-// Lazy load components for better performance
-const LazyAdminDashboard = lazy(() => import('./pages/AdminDashboardPage'));
-const LazyProductForm = lazy(() => import('./pages/ProductFormPage'));
 
 function App() {
   return (
