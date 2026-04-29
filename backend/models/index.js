@@ -38,6 +38,7 @@ const initSchema = async () => {
         brand VARCHAR(100) NOT NULL DEFAULT '',
         unit VARCHAR(20) NOT NULL DEFAULT 'piece',
         price VARCHAR(100) NOT NULL DEFAULT 'Contact for price',
+        nickname VARCHAR(200) NOT NULL DEFAULT '',
         description TEXT NOT NULL DEFAULT '',
         image VARCHAR(500) NOT NULL DEFAULT '',
         is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -152,7 +153,7 @@ const Product = {
     }
 
     if (q) {
-      query = query.ilike('name', `%${q}%`);
+      query = query.or(`name.ilike.%${q}%,nickname.ilike.%${q}%`);
     }
 
     const offset = (page - 1) * limit;

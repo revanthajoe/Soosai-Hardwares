@@ -61,6 +61,7 @@ function ProductCard({
       <div className="product-head">
         <Link to={`/products/${productId}`} className="product-link">
           <h3>{product.name}</h3>
+          {product.nickname && <span className="nickname-badge">aka {product.nickname}</span>}
         </Link>
         <div className="product-actions">
           <button

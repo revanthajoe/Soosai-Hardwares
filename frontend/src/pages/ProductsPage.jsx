@@ -67,7 +67,8 @@ function ProductsPage() {
 
   const filtered = useMemo(() => {
     return products.filter((product) => {
-      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase()) || 
+                            (product.nickname && product.nickname.toLowerCase().includes(search.toLowerCase()));
       const matchesCategory = category ? String(product.category?.id) === String(category) : true;
       const matchesBrand = brand ? product.brand?.toLowerCase() === brand.toLowerCase() : true;
       return matchesSearch && matchesCategory && matchesBrand;

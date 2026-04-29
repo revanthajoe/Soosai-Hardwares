@@ -9,6 +9,7 @@ const emptyForm = {
   brand: '',
   unit: 'piece',
   price: '',
+  nickname: '',
   description: '',
   isFeatured: false,
 };
@@ -39,6 +40,7 @@ function ProductFormPage() {
             brand: item.brand || '',
             unit: item.unit || 'piece',
             price: item.price ?? '',
+            nickname: item.nickname || '',
             description: item.description || '',
             isFeatured: Boolean(item.isFeatured),
           });
@@ -98,8 +100,16 @@ function ProductFormPage() {
         </div>
 
         <form className="mobile-form" onSubmit={handleSubmit}>
-          <label htmlFor="name">Product Name</label>
-          <input id="name" value={form.name} onChange={(e) => updateField('name', e.target.value)} required />
+          <div className="inline-inputs">
+            <div style={{ flex: 1 }}>
+              <label htmlFor="name">Product Name</label>
+              <input id="name" value={form.name} onChange={(e) => updateField('name', e.target.value)} required />
+            </div>
+            <div style={{ flex: 1 }}>
+              <label htmlFor="nickname">Nickname (Local Name)</label>
+              <input id="nickname" value={form.nickname} onChange={(e) => updateField('nickname', e.target.value)} placeholder="e.g. Jallikallu" />
+            </div>
+          </div>
 
           <label htmlFor="category">Category</label>
           <select

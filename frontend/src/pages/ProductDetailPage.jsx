@@ -178,7 +178,10 @@ function ProductDetailPage() {
         </div>
 
         <div>
-          <h1>{product.name}</h1>
+          <h1>
+            {product.name}
+            {product.nickname && <span className="nickname-badge" style={{ marginLeft: '0.5rem', verticalAlign: 'middle', fontSize: '1rem' }}>aka {product.nickname}</span>}
+          </h1>
           <p className="meta">{product.brand || 'Generic'} • {product.category?.name}</p>
           <p className="price">{formatPrice(product?.price)} / {product.unit || 'piece'}</p>
           <p className="description">{product.description || 'No description available.'}</p>

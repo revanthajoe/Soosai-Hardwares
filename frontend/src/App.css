@@ -481,6 +481,17 @@ button,
   animation: slideInRight 0.4s ease-out;
 }
 
+.nickname-badge {
+  font-size: 0.8rem;
+  color: var(--accent);
+  background: var(--accent-light);
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 0.2rem;
+  font-weight: 500;
+}
+
 .badge.in { background: #d8fbe8; color: #0d6b43; }
 .badge.low { background: #fff1cd; color: #8c5a00; }
 .badge.out { background: #ffdce0; color: #9f2533; }

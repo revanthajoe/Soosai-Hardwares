@@ -251,7 +251,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
  *         description: Validation error
  */
 const createProduct = asyncHandler(async (req, res) => {
-  const { name, categoryId, brand, unit, price, description, isActive, isFeatured } = req.body;
+  const { name, categoryId, brand, unit, price, nickname, description, isActive, isFeatured } = req.body;
 
   // Validate required fields
   if (!name || !categoryId || !price) {
@@ -294,6 +294,7 @@ const createProduct = asyncHandler(async (req, res) => {
     brand: (brand || '').trim(),
     unit: (unit || 'piece').trim(),
     price: String(price).trim(),
+    nickname: (nickname || '').trim(),
     description: (description || '').trim(),
     image,
     is_active: isActive !== 'false',
@@ -359,7 +360,7 @@ const createProduct = asyncHandler(async (req, res) => {
  */
 const updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, categoryId, brand, unit, price, description, isActive, isFeatured } = req.body;
+  const { name, categoryId, brand, unit, price, nickname, description, isActive, isFeatured } = req.body;
 
   const productId = parseInt(id);
   if (isNaN(productId)) {
@@ -414,6 +415,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   if (price !== undefined) {
     updates.price = String(price).trim();
   }
+  if (nickname !== undefined) updates.nickname = (nickname || '').trim();
   if (description !== undefined) updates.description = (description || '').trim();
   if (isActive !== undefined) updates.is_active = isActive === 'true' || isActive === true;
   if (isFeatured !== undefined) updates.is_featured = isFeatured === 'true' || isFeatured === true;
