@@ -77,9 +77,19 @@ function ProductsPage() {
   const sorted = useMemo(() => {
     const items = [...filtered];
 
+    const parsePrice = (priceStr) => parseFloat(String(priceStr).replace(/[^\d.]/g, '')) || 0;
+
     switch (sortBy) {
       case 'name-asc':
         return items.sort((a, b) => a.name.localeCompare(b.name));
+      case 'name-desc':
+        return items.sort((a, b) => b.name.localeCompare(a.name));
+      case 'price-asc':
+        return items.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
+      case 'price-desc':
+        return items.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
+      case 'newest':
+        return items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
       default:
         return items.sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
     }
@@ -250,7 +260,6 @@ function ProductsPage() {
                   <h4>{item.name}</h4>
                   <p>{item.brand || 'Generic'}</p>
                   <p>₹{item.price}</p>
-                  <p>Stock: {item.stock}</p>
                 </div>
               ))}
             </div>

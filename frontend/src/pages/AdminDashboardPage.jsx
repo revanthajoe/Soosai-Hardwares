@@ -121,7 +121,6 @@ function AdminDashboardPage() {
   };
 
   // Mock analytics
-  const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0).toFixed(2);
 
   return (
     <div className="container page-gap">
@@ -214,7 +213,7 @@ function AdminDashboardPage() {
               <tbody>
                 {orders.map(o => (
                   <tr key={o.id}>
-                    <td>{o.id}</td><td>{o.customer}</td><td>${Number(o.amount).toFixed(2)}</td><td>{o.status}</td><td>{new Date(o.date).toLocaleDateString()}</td>
+                    <td>{o.id}</td><td>{o.customer}</td><td>₹{Number(o.amount).toFixed(2)}</td><td>{o.status}</td><td>{new Date(o.date).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>
@@ -234,30 +233,33 @@ function AdminDashboardPage() {
               <h3>WhatsApp Purchases</h3>
               <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>{analytics.whatsapp_orders || 0}</p>
             </div>
-            <div className="panel" style={{ border: '1px solid var(--border)' }}>
-              <h3>Total Revenue</h3>
-              <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>${totalRevenue}</p>
+            <div className="panel" style={{ border: '1px solid var(--border)', textAlign: 'center' }}>
+              <h3>Conversion Rate</h3>
+              <p style={{ fontSize: '2rem', fontWeight: 'bold' }}>
+                {analytics.visits ? ((analytics.whatsapp_orders / analytics.visits) * 100).toFixed(1) : 0}%
+              </p>
             </div>
           </section>
 
           <section className="panel">
-            <h2>Traffic vs Orders Overview</h2>
-            <div style={{ width: '100%', height: 350, marginTop: '1rem' }}>
+            <h2>Store Engagement Funnel</h2>
+            <p className="muted" style={{ marginBottom: '1rem' }}>Visualizing the drop-off from total store visitors to completed WhatsApp purchases.</p>
+            <div style={{ width: '100%', height: 350 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={[
-                    { name: 'Analytics', Visitors: analytics.visits || 0, Orders: analytics.whatsapp_orders || 0 }
+                    { stage: 'Total Store Visitors', count: analytics.visits || 0, fill: '#8884d8' },
+                    { stage: 'WhatsApp Orders', count: analytics.whatsapp_orders || 0, fill: '#82ca9d' }
                   ]}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
-                  <XAxis dataKey="name" stroke="var(--text)" />
-                  <YAxis stroke="var(--text)" />
+                  <XAxis dataKey="stage" stroke="var(--text)" />
+                  <YAxis stroke="var(--text)" allowDecimals={false} />
                   <Tooltip 
+                    cursor={{fill: 'transparent'}}
                     contentStyle={{ backgroundColor: 'var(--surface)', borderColor: 'var(--border)', color: 'var(--text)' }} 
                   />
-                  <Legend />
-                  <Bar dataKey="Visitors" fill="#8884d8" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="Orders" fill="#82ca9d" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

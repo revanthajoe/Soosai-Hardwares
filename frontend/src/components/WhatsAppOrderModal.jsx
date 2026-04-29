@@ -20,17 +20,14 @@ export default function WhatsAppOrderModal({ isOpen, onClose, items }) {
     message += `Address: ${address}\n\n`;
     message += `*Items:*\n`;
 
-    let total = 0;
     items.forEach((item) => {
-      const price = item.price || item.product?.price || 0;
+      const price = item.price || item.product?.price || 'Contact for price';
       const qty = item.qty || 1;
       const name = item.name || item.product?.name || 'Item';
-      const itemTotal = price * qty;
-      total += itemTotal;
-      message += `- ${name} (x${qty}) = ₹${itemTotal.toFixed(2)}\n`;
+      message += `- ${name} (x${qty}) [Approx Price: ₹${price}]\n`;
     });
 
-    message += `\n*Total Estimate: ₹${total.toFixed(2)}*`;
+    message += `\n*Please confirm exact pricing and availability.*`;
 
     const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
