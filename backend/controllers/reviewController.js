@@ -2,6 +2,46 @@ const { Review, Product } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const { logger } = require('../config/logger');
 
+const getShopReviews = asyncHandler(async (req, res) => {
+  const reviews = await Review.findShopReviews();
+  let averageRating = 0;
+  if (reviews.length > 0) {
+    const sum = reviews.reduce((acc, curr) => acc + curr.rating, 0);
+    averageRating = (sum / reviews.length).toFixed(1);
+  }
+  res.status(200).json({
+    success: true,
+    data: {
+      reviews,
+      averageRating: parseFloat(averageRating),
+      totalReviews: reviews.length,
+    },
+  });
+});
+
+const createShopReview = asyncHandler(async (req, res) => {
+  const { authorName, rating, comment } = req.body;
+  if (!authorName || !rating) {
+    return res.status(400).json({ success: false, message: 'Name and rating are required' });
+  }
+  const numRating = parseInt(rating);
+  if (numRating < 1 || numRating > 5) {
+    return res.status(400).json({ success: false, message: 'Rating must be between 1 and 5' });
+  }
+  const review = await Review.create({
+    product_id: null,
+    author_name: authorName.trim(),
+    rating: numRating,
+    comment: comment ? comment.trim() : '',
+  });
+  logger.info(`Shop review created by ${authorName}`);
+  res.status(201).json({
+    success: true,
+    message: 'Shop review submitted successfully',
+    data: review,
+  });
+});
+
 const getReviewsByProductId = asyncHandler(async (req, res) => {
   const { productId } = req.params;
 
@@ -84,6 +124,8 @@ const deleteReview = asyncHandler(async (req, res) => {
 });
 
 module.exports = {
+  getShopReviews,
+  createShopReview,
   getReviewsByProductId,
   createReview,
   deleteReview,

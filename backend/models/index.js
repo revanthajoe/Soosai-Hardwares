@@ -49,7 +49,7 @@ const initSchema = async () => {
 
       CREATE TABLE IF NOT EXISTS reviews (
         id SERIAL PRIMARY KEY,
-        product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
         author_name VARCHAR(100) NOT NULL,
         rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
         comment TEXT,
@@ -131,10 +131,10 @@ const Product = {
   /**
    * Find products with filters, pagination, and category join
    */
-  async findAll({ category, brand, q, featured, page = 1, limit = 20, activeOnly = true } = {}) {
+  async findAll({ category, brand, q, featured, sortBy, page = 1, limit = 20, activeOnly = true } = {}) {
     let query = supabase
       .from('products')
-      .select('*, categories!category_id(id, name, slug)', { count: 'exact' });
+      .select('*, categories!category_id(id, name, slug), reviews(rating)', { count: 'exact' });
 
     if (activeOnly) {
       query = query.eq('is_active', true);
@@ -157,15 +157,44 @@ const Product = {
     }
 
     const offset = (page - 1) * limit;
-    query = query
-      .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1);
+    
+    // Default sorting
+    if (sortBy === 'name-asc') {
+      query = query.order('name', { ascending: true });
+    } else if (sortBy === 'name-desc') {
+      query = query.order('name', { ascending: false });
+    } else if (sortBy === 'newest') {
+      query = query.order('created_at', { ascending: false });
+    } else if (sortBy === 'featured') {
+      query = query.order('is_featured', { ascending: false }).order('created_at', { ascending: false });
+    } else if (sortBy === 'price-asc') {
+      // Crude sort for VARCHAR price column
+      query = query.order('price', { ascending: true });
+    } else if (sortBy === 'price-desc') {
+      query = query.order('price', { ascending: false });
+    } else {
+      query = query.order('created_at', { ascending: false });
+    }
+
+    query = query.range(offset, offset + limit - 1);
 
     const { data, error, count } = await query;
     if (error) throw error;
 
-    // Reshape the joined data to match the old Sequelize format
-    const rows = (data || []).map((row) => Product._reshape(row));
+    const rows = (data || []).map(row => {
+      const ratings = row.reviews || [];
+      const reviewCount = ratings.length;
+      const avgRating = reviewCount > 0 
+        ? parseFloat((ratings.reduce((sum, r) => sum + r.rating, 0) / reviewCount).toFixed(1))
+        : 0;
+      
+      const product = Product._reshape(row);
+      return {
+        ...product,
+        reviewCount,
+        avgRating,
+      };
+    });
 
     return { rows, count: count || 0 };
   },
@@ -338,6 +367,16 @@ const Review = {
       .from('reviews')
       .select('*')
       .eq('product_id', productId)
+      .order('created_at', { ascending: false });
+    if (error) throw error;
+    return (data || []).map(Review._reshape);
+  },
+
+  async findShopReviews() {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .is('product_id', null)
       .order('created_at', { ascending: false });
     if (error) throw error;
     return (data || []).map(Review._reshape);

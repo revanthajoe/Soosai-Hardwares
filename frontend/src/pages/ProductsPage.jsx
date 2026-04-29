@@ -21,6 +21,7 @@ function ProductsPage() {
   const [brand, setBrand] = useState('');
   const [sortBy, setSortBy] = useState('featured');
   const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [wishlistIds, setWishlistIds] = useState([]);
   const [compareIds, setCompareIds] = useState([]);
   const [cartItems, setCartItems] = useState([]);
@@ -28,6 +29,7 @@ function ProductsPage() {
   const [error, setError] = useState('');
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [modalItems, setModalItems] = useState([]);
+  const [brands, setBrands] = useState([]);
 
   const refreshLocalState = () => {
     setWishlistIds(loadJSON(WISHLIST_KEY, []));
@@ -36,11 +38,34 @@ function ProductsPage() {
   };
 
   useEffect(() => {
-    const load = async () => {
+    const loadCategories = async () => {
       try {
-        const [categoryRes, productRes] = await Promise.all([api.getCategories(), api.getProducts()]);
-        setCategories(categoryRes.data || []);
-        setProducts(productRes.data || []);
+        const res = await api.getCategories();
+        setCategories(res.data || []);
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      setLoading(true);
+      try {
+        const query = new URLSearchParams();
+        if (search) query.set('q', search);
+        if (category) query.set('category', category);
+        if (brand) query.set('brand', brand);
+        if (sortBy) query.set('sortBy', sortBy);
+        query.set('page', page);
+        query.set('limit', PER_PAGE);
+
+        const res = await api.getProducts(`?${query.toString()}`);
+        setProducts(res.data || []);
+        if (res.pagination) {
+          setTotalPages(res.pagination.pages || 1);
+        }
       } catch (err) {
         setError(err.message || 'Failed to load products.');
       } finally {
@@ -48,8 +73,8 @@ function ProductsPage() {
       }
     };
 
-    void load();
-  }, []);
+    loadProducts();
+  }, [search, category, brand, sortBy, page]);
 
   useEffect(() => {
     refreshLocalState();
@@ -60,47 +85,10 @@ function ProductsPage() {
     });
   }, []);
 
-  const brands = useMemo(
-    () => Array.from(new Set(products.map((item) => item.brand).filter(Boolean))).sort(),
-    [products]
-  );
-
-  const filtered = useMemo(() => {
-    return products.filter((product) => {
-      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase()) || 
-                            (product.nickname && product.nickname.toLowerCase().includes(search.toLowerCase()));
-      const matchesCategory = category ? String(product.category?.id) === String(category) : true;
-      const matchesBrand = brand ? product.brand?.toLowerCase() === brand.toLowerCase() : true;
-      return matchesSearch && matchesCategory && matchesBrand;
-    });
-  }, [products, search, category, brand]);
-
-  const sorted = useMemo(() => {
-    const items = [...filtered];
-
-    const parsePrice = (priceStr) => parseFloat(String(priceStr).replace(/[^\d.]/g, '')) || 0;
-
-    switch (sortBy) {
-      case 'name-asc':
-        return items.sort((a, b) => a.name.localeCompare(b.name));
-      case 'name-desc':
-        return items.sort((a, b) => b.name.localeCompare(a.name));
-      case 'price-asc':
-        return items.sort((a, b) => parsePrice(a.price) - parsePrice(b.price));
-      case 'price-desc':
-        return items.sort((a, b) => parsePrice(b.price) - parsePrice(a.price));
-      case 'newest':
-        return items.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-      default:
-        return items.sort((a, b) => Number(b.isFeatured) - Number(a.isFeatured));
-    }
-  }, [filtered, sortBy]);
-
-  const totalPages = Math.max(1, Math.ceil(sorted.length / PER_PAGE));
-  const pageItems = useMemo(() => {
-    const start = (page - 1) * PER_PAGE;
-    return sorted.slice(start, start + PER_PAGE);
-  }, [page, sorted]);
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [search, category, brand, sortBy]);
 
   useEffect(() => {
     setPage(1);
@@ -231,7 +219,7 @@ function ProductsPage() {
         {!loading && !error ? (
           <>
             <ProductList
-              products={pageItems}
+              products={products}
               wishlistIds={wishlistIds}
               compareIds={compareIds}
               canCompare={compareIds.length < 3}

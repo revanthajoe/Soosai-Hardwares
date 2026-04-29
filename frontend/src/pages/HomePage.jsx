@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import ProductList from '../components/catalog/ProductList';
 import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
+import ReviewsSection from '../components/ReviewsSection';
 
 function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -52,6 +53,8 @@ function HomePage() {
         {error ? <Alert type="error">{error}</Alert> : null}
         {!loading && !error ? <ProductList products={featuredProducts} /> : null}
       </section>
+
+      <ReviewsSection targetId="shop" title="What our customers say about Soosai Hardwares" />
     </div>
   );
 }

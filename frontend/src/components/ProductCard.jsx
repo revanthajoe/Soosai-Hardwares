@@ -61,7 +61,13 @@ function ProductCard({
       <div className="product-head">
         <Link to={`/products/${productId}`} className="product-link">
           <h3>{product.name}</h3>
-          {product.nickname && <span className="nickname-badge">aka {product.nickname}</span>}
+          {product.nickname && <div className="nickname-badge">aka {product.nickname}</div>}
+          {product.avgRating > 0 && (
+            <div style={{ fontSize: '0.8rem', color: '#ffc107', marginTop: '0.2rem' }}>
+              {'★'.repeat(Math.round(product.avgRating))}{'☆'.repeat(5 - Math.round(product.avgRating))}
+              <span className="muted" style={{ marginLeft: '0.4rem', color: 'var(--text)', opacity: 0.6 }}>({product.reviewCount})</span>
+            </div>
+          )}
         </Link>
         <div className="product-actions">
           <button

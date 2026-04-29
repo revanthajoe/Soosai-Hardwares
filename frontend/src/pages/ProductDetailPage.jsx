@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import { api } from '../services/api';
 import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
+import ReviewsSection from '../components/ReviewsSection';
 import WhatsAppOrderModal from '../components/WhatsAppOrderModal';
 import { toMediaUrl } from '../services/media';
 import { loadJSON, saveJSON } from '../utils/storage';
@@ -29,9 +30,6 @@ function ProductDetailPage() {
   const [cartItems, setCartItems] = useState([]);
   const [selectedImage, setSelectedImage] = useState('');
   const [reviews, setReviews] = useState([]);
-  const [reviewName, setReviewName] = useState('');
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -117,42 +115,9 @@ function ProductDetailPage() {
     saveJSON(CART_KEY, current);
   };
 
-  const submitReview = async (event) => {
-    event.preventDefault();
-    if (!reviewName.trim() || !reviewComment.trim()) return;
-
-    try {
-      const response = await api.createReview(id, {
-        authorName: reviewName.trim(),
-        rating: Number(reviewRating),
-        comment: reviewComment.trim(),
-      });
-      
-      const newReview = {
-        id: response.data.id,
-        name: response.data.authorName,
-        rating: response.data.rating,
-        comment: response.data.comment,
-        createdAt: response.data.createdAt,
-      };
-
-      setReviews([newReview, ...reviews]);
-      setReviewName('');
-      setReviewComment('');
-      setReviewRating(5);
-    } catch (err) {
-      alert(err.message || 'Failed to submit review');
-    }
-  };
-
   if (loading) return <div className="container page-gap"><Loader text="Loading product..." /></div>;
   if (error) return <div className="container page-gap"><Alert type="error">{error}</Alert></div>;
   if (!product) return <div className="container page-gap"><Alert type="error">Product not found.</Alert></div>;
-
-  const message = `Hello, I want to order:\nProduct: ${product.name}\nQuantity: ${qty} ${
-    product.unit || 'piece'
-  }\nPrice: ${formatPrice(product.price)}`;
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 
   return (
     <div className="container page-gap">
@@ -222,61 +187,7 @@ function ProductDetailPage() {
         </div>
       </section>
 
-      <section className="panel">
-        <div className="toolbar">
-          <h2>Customer Reviews</h2>
-        </div>
-        <form className="review-form" onSubmit={submitReview}>
-          <input
-            type="text"
-            placeholder="Your name"
-            value={reviewName}
-            onChange={(event) => setReviewName(event.target.value)}
-            required
-          />
-          <select value={reviewRating} onChange={(event) => setReviewRating(event.target.value)}>
-            {[5, 4, 3, 2, 1].map((value) => (
-              <option key={value} value={value}>{value} Stars</option>
-            ))}
-          </select>
-          <textarea
-            rows="3"
-            placeholder="Share your experience"
-            value={reviewComment}
-            onChange={(event) => setReviewComment(event.target.value)}
-            required
-          />
-          <button type="submit" className="button-link">Submit Review</button>
-        </form>
-
-        {reviews.length ? (
-          <div className="review-list" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '2rem' }}>
-            {reviews.map((review) => (
-              <div className="review-card" key={review.id} style={{ borderBottom: '1px solid #eee', paddingBottom: '1.5rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <div style={{ width: '32px', height: '32px', borderRadius: '50%', backgroundColor: '#e3e6e6', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', color: '#555' }}>
-                    {(review.name || review.authorName || 'U')[0].toUpperCase()}
-                  </div>
-                  <strong style={{ fontSize: '1.1rem' }}>{review.name || review.authorName}</strong>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <span style={{ color: '#FFA41C', fontSize: '1.2rem', letterSpacing: '2px' }}>
-                    {'★'.repeat(review.rating)}{'☆'.repeat(5 - review.rating)}
-                  </span>
-                  <strong style={{ color: '#0F1111' }}>Excellent Product</strong>
-                </div>
-                <div style={{ color: '#c45500', fontSize: '0.85rem', fontWeight: 'bold', marginBottom: '0.5rem' }}>Verified Purchase</div>
-                <p style={{ color: '#0F1111', lineHeight: '1.5' }}>{review.comment}</p>
-                <div style={{ color: '#565959', fontSize: '0.85rem', marginTop: '0.5rem' }}>
-                  Reviewed on {new Date(review.createdAt || Date.now()).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="muted" style={{ marginTop: '1rem' }}>Be the first to review this product.</p>
-        )}
-      </section>
+      <ReviewsSection targetId={product.id} title={`Reviews for ${product.name}`} />
 
       <WhatsAppOrderModal 
         isOpen={orderModalOpen} 

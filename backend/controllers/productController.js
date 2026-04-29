@@ -90,6 +90,7 @@ const getProducts = asyncHandler(async (req, res) => {
     brand,
     q,
     featured,
+    sortBy,
     page: pageNum,
     limit: limitNum,
   });
