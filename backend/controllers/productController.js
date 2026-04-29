@@ -56,7 +56,7 @@ const cache = new Map();
  *         description: Server error
  */
 const getProducts = asyncHandler(async (req, res) => {
-  const { category, brand, q, featured, page = 1, limit = 20 } = req.query;
+  const { category, brand, q, featured, sortBy, page = 1, limit = 20 } = req.query;
 
   logger.debug('Fetching products', { category, brand, q, featured, page, limit });
 
@@ -76,7 +76,7 @@ const getProducts = asyncHandler(async (req, res) => {
     }
   }
 
-  const cacheKey = `products_${category}_${brand}_${q}_${featured}_${pageNum}_${limitNum}`;
+  const cacheKey = `products_${category}_${brand}_${q}_${featured}_${sortBy}_${pageNum}_${limitNum}`;
   if (cache.has(cacheKey)) {
     const cachedData = cache.get(cacheKey);
     if (cachedData.expiresAt > Date.now()) {
