@@ -1,10 +1,10 @@
-const User = require('../models/User');
+const { User } = require('../models');
 
 const ensureDefaultAdmin = async () => {
   const username = process.env.ADMIN_USERNAME || 'admin';
   const password = process.env.ADMIN_PASSWORD || 'admin123';
 
-  const existing = await User.findOne({ where: { username, role: 'admin' } });
+  const existing = await User.findByUsername(username);
 
   if (existing) {
     return;

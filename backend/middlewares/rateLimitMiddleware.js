@@ -16,10 +16,7 @@ const apiLimiter = rateLimit({
     // Skip health checks
     return req.path === '/api/health';
   },
-  keyGenerator: (req) => {
-    // Use X-Forwarded-For header if behind proxy, otherwise use IP
-    return req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress;
-  },
+  keyGenerator: (req) => rateLimit.ipKeyGenerator(req),
 });
 
 // Stricter rate limiter for authentication endpoints

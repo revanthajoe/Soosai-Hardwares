@@ -12,6 +12,7 @@ import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import ProductFormPage from './pages/ProductFormPage';
 import NotFoundPage from './pages/NotFoundPage';
+import AnalyticsTracker from './components/AnalyticsTracker';
 import './App.css';
 
 function App() {
@@ -19,6 +20,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider>
         <BrowserRouter>
+          <AnalyticsTracker />
           <Navbar />
           <Suspense fallback={<div className="loading-skeleton"></div>}>
             <Routes>

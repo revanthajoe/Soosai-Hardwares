@@ -3,11 +3,14 @@
  * Handles product CRUD operations with validation and error handling
  */
 
-const { Op, fn, col, where } = require('sequelize');
 const { Product, Category } = require('../models');
 const { logger } = require('../config/logger');
+const { deleteFromCloudinary, getPublicIdFromUrl } = require('../config/cloudinary');
 const asyncHandler = require('../utils/asyncHandler');
 const slugify = require('../utils/slugify');
+
+// Simple in-memory cache to reduce database queries
+const cache = new Map();
 
 /**
  * @swagger
@@ -61,10 +64,7 @@ const getProducts = asyncHandler(async (req, res) => {
   const pageNum = Math.max(1, parseInt(page) || 1);
   const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 20));
 
-  const filter = { isActive: true };
-  const andFilters = [];
-
-  // Category filter
+  // Category filter validation
   if (category) {
     const categoryId = parseInt(category);
     if (isNaN(categoryId)) {
@@ -74,37 +74,27 @@ const getProducts = asyncHandler(async (req, res) => {
         statusCode: 400,
       });
     }
-    filter.categoryId = categoryId;
   }
 
-  // Brand filter
-  if (brand && typeof brand === 'string') {
-    andFilters.push(where(fn('LOWER', col('Product.brand')), Op.like, `%${brand.toLowerCase()}%`));
+  const cacheKey = `products_${category}_${brand}_${q}_${featured}_${pageNum}_${limitNum}`;
+  if (cache.has(cacheKey)) {
+    const cachedData = cache.get(cacheKey);
+    if (cachedData.expiresAt > Date.now()) {
+      return res.status(200).json(cachedData.data);
+    }
+    cache.delete(cacheKey);
   }
 
-  // Featured filter
-  if (featured === 'true') {
-    filter.isFeatured = true;
-  }
-
-  // Search query
-  if (q && typeof q === 'string') {
-    andFilters.push(where(fn('LOWER', col('Product.name')), Op.like, `%${q.toLowerCase()}%`));
-  }
-
-  if (andFilters.length > 0) {
-    filter[Op.and] = andFilters;
-  }
-
-  const { count, rows } = await Product.findAndCountAll({
-    where: filter,
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
-    order: [['createdAt', 'DESC']],
-    offset: (pageNum - 1) * limitNum,
+  const { rows, count } = await Product.findAll({
+    category,
+    brand,
+    q,
+    featured,
+    page: pageNum,
     limit: limitNum,
   });
 
-  res.status(200).json({
+  const responseData = {
     success: true,
     data: rows,
     pagination: {
@@ -113,7 +103,11 @@ const getProducts = asyncHandler(async (req, res) => {
       limit: limitNum,
       pages: Math.ceil(count / limitNum),
     },
-  });
+  };
+
+  cache.set(cacheKey, { data: responseData, expiresAt: Date.now() + 30000 }); // Cache for 30 seconds
+
+  res.status(200).json(responseData);
 });
 
 /**
@@ -146,9 +140,7 @@ const getProductById = asyncHandler(async (req, res) => {
     });
   }
 
-  const product = await Product.findByPk(productId, {
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
-  });
+  const product = await Product.findById(productId);
 
   if (!product || !product.isActive) {
     logger.warn(`Product not found: ${productId}`);
@@ -194,10 +186,7 @@ const getProductBySlug = asyncHandler(async (req, res) => {
     });
   }
 
-  const product = await Product.findOne({
-    where: { slug: slug.toLowerCase(), isActive: true },
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
-  });
+  const product = await Product.findBySlug(slug.toLowerCase());
 
   if (!product) {
     logger.warn(`Product slug not found: ${slug}`);
@@ -262,19 +251,19 @@ const getProductBySlug = asyncHandler(async (req, res) => {
  *         description: Validation error
  */
 const createProduct = asyncHandler(async (req, res) => {
-  const { name, categoryId, brand, unit, price, stock, description, isActive, isFeatured } = req.body;
+  const { name, categoryId, brand, unit, price, description, isActive, isFeatured } = req.body;
 
   // Validate required fields
-  if (!name || !categoryId || !price || stock === undefined) {
+  if (!name || !categoryId || !price) {
     return res.status(400).json({
       success: false,
-      message: 'Missing required fields: name, categoryId, price, stock',
+      message: 'Missing required fields: name, categoryId, price',
       statusCode: 400,
     });
   }
 
   // Validate category exists
-  const category = await Category.findByPk(parseInt(categoryId));
+  const category = await Category.findById(parseInt(categoryId));
   if (!category) {
     logger.warn(`Invalid category: ${categoryId}`);
     return res.status(400).json({
@@ -284,47 +273,31 @@ const createProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  // Validate numeric fields
-  const numPrice = parseFloat(price);
-  const numStock = parseInt(stock);
-  if (isNaN(numPrice) || numPrice < 0 || isNaN(numStock) || numStock < 0) {
-    return res.status(400).json({
-      success: false,
-      message: 'Price and stock must be valid positive numbers',
-      statusCode: 400,
-    });
-  }
-
   // Generate slug
   const baseSlug = slugify(name);
   let slug = baseSlug;
   let count = 1;
-  while (await Product.findOne({ where: { slug } })) {
+  while (await Product.findOneBySlug(slug)) {
     slug = `${baseSlug}-${count}`;
     count++;
   }
 
-  // Handle file upload
-  const image = req.file ? `/uploads/${req.file.filename}` : '';
+  const image = req.cloudinaryUrl || '';
+
+  cache.clear(); // Clear cache when new product is created
 
   // Create product
   const product = await Product.create({
     name: name.trim(),
     slug,
-    categoryId: parseInt(categoryId),
+    category_id: parseInt(categoryId),
     brand: (brand || '').trim(),
     unit: (unit || 'piece').trim(),
-    price: numPrice,
-    stock: numStock,
+    price: String(price).trim(),
     description: (description || '').trim(),
     image,
-    isActive: isActive !== 'false',
-    isFeatured: isFeatured === 'true',
-  });
-
-  // Fetch populated product
-  const populatedProduct = await Product.findByPk(product.id, {
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
+    is_active: isActive !== 'false',
+    is_featured: isFeatured === 'true',
   });
 
   logger.info(`Product created: ${product.id} - ${product.name}`);
@@ -332,7 +305,7 @@ const createProduct = asyncHandler(async (req, res) => {
   res.status(201).json({
     success: true,
     message: 'Product created successfully',
-    data: populatedProduct,
+    data: product,
   });
 });
 
@@ -386,7 +359,7 @@ const createProduct = asyncHandler(async (req, res) => {
  */
 const updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, categoryId, brand, unit, price, stock, description, isActive, isFeatured } = req.body;
+  const { name, categoryId, brand, unit, price, description, isActive, isFeatured } = req.body;
 
   const productId = parseInt(id);
   if (isNaN(productId)) {
@@ -397,8 +370,8 @@ const updateProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  const product = await Product.findByPk(productId);
-  if (!product) {
+  const existingProduct = await Product.findById(productId);
+  if (!existingProduct) {
     logger.warn(`Product not found for update: ${productId}`);
     return res.status(404).json({
       success: false,
@@ -407,9 +380,11 @@ const updateProduct = asyncHandler(async (req, res) => {
     });
   }
 
+  const updates = {};
+
   // Update category if provided
   if (categoryId) {
-    const category = await Category.findByPk(parseInt(categoryId));
+    const category = await Category.findById(parseInt(categoryId));
     if (!category) {
       return res.status(400).json({
         success: false,
@@ -417,73 +392,57 @@ const updateProduct = asyncHandler(async (req, res) => {
         statusCode: 400,
       });
     }
-    product.categoryId = parseInt(categoryId);
+    updates.category_id = parseInt(categoryId);
   }
 
   // Update slug if name changed
-  if (name && name !== product.name) {
+  if (name && name !== existingProduct.name) {
     const baseSlug = slugify(name);
     let slug = baseSlug;
     let count = 1;
-    while (
-      await Product.findOne({
-        where: { slug, id: { [Op.ne]: productId } },
-      })
-    ) {
+    while (await Product.findOneBySlug(slug, productId)) {
       slug = `${baseSlug}-${count}`;
       count++;
     }
-    product.name = name.trim();
-    product.slug = slug;
+    updates.name = name.trim();
+    updates.slug = slug;
   }
 
   // Update other fields
-  if (brand !== undefined) product.brand = (brand || '').trim();
-  if (unit !== undefined) product.unit = (unit || 'piece').trim();
+  if (brand !== undefined) updates.brand = (brand || '').trim();
+  if (unit !== undefined) updates.unit = (unit || 'piece').trim();
   if (price !== undefined) {
-    const numPrice = parseFloat(price);
-    if (isNaN(numPrice) || numPrice < 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Price must be a valid positive number',
-        statusCode: 400,
-      });
+    updates.price = String(price).trim();
+  }
+  if (description !== undefined) updates.description = (description || '').trim();
+  if (isActive !== undefined) updates.is_active = isActive === 'true' || isActive === true;
+  if (isFeatured !== undefined) updates.is_featured = isFeatured === 'true' || isFeatured === true;
+
+  // Update image if new one uploaded to Cloudinary
+  if (req.cloudinaryUrl) {
+    // Delete old image from Cloudinary if it exists
+    const oldPublicId = getPublicIdFromUrl(existingProduct.image);
+    if (oldPublicId) {
+      try {
+        await deleteFromCloudinary(oldPublicId);
+        logger.info(`Deleted old Cloudinary image: ${oldPublicId}`);
+      } catch (err) {
+        logger.warn(`Failed to delete old Cloudinary image: ${err.message}`);
+      }
     }
-    product.price = numPrice;
-  }
-  if (stock !== undefined) {
-    const numStock = parseInt(stock);
-    if (isNaN(numStock) || numStock < 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Stock must be a valid positive number',
-        statusCode: 400,
-      });
-    }
-    product.stock = numStock;
-  }
-  if (description !== undefined) product.description = (description || '').trim();
-  if (isActive !== undefined) product.isActive = isActive === 'true' || isActive === true;
-  if (isFeatured !== undefined) product.isFeatured = isFeatured === 'true' || isFeatured === true;
-
-  // Update image if uploaded
-  if (req.file) {
-    product.image = `/uploads/${req.file.filename}`;
+    updates.image = req.cloudinaryUrl;
   }
 
-  await product.save();
+  cache.clear(); // Clear cache when product is updated
 
-  // Fetch populated product
-  const populatedProduct = await Product.findByPk(productId, {
-    include: [{ model: Category, as: 'category', attributes: ['id', 'name', 'slug'] }],
-  });
+  const updatedProduct = await Product.update(productId, updates);
 
   logger.info(`Product updated: ${productId}`);
 
   res.status(200).json({
     success: true,
     message: 'Product updated successfully',
-    data: populatedProduct,
+    data: updatedProduct,
   });
 });
 
@@ -519,7 +478,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  const product = await Product.findByPk(productId);
+  const product = await Product.findById(productId);
   if (!product) {
     logger.warn(`Product not found for deletion: ${productId}`);
     return res.status(404).json({
@@ -529,7 +488,20 @@ const deleteProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  await product.destroy();
+  // Delete image from Cloudinary
+  const publicId = getPublicIdFromUrl(product.image);
+  if (publicId) {
+    try {
+      await deleteFromCloudinary(publicId);
+      logger.info(`Deleted Cloudinary image: ${publicId}`);
+    } catch (err) {
+      logger.warn(`Failed to delete Cloudinary image: ${err.message}`);
+    }
+  }
+
+  cache.clear(); // Clear cache when product is deleted
+
+  await Product.delete(productId);
 
   logger.info(`Product deleted: ${productId}`);
 

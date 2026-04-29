@@ -9,7 +9,6 @@ const emptyForm = {
   brand: '',
   unit: 'piece',
   price: '',
-  stock: '0',
   description: '',
   isFeatured: false,
 };
@@ -40,7 +39,6 @@ function ProductFormPage() {
             brand: item.brand || '',
             unit: item.unit || 'piece',
             price: item.price ?? '',
-            stock: item.stock ?? 0,
             description: item.description || '',
             isFeatured: Boolean(item.isFeatured),
           });
@@ -64,7 +62,11 @@ function ProductFormPage() {
 
     const formData = new FormData();
     Object.entries(form).forEach(([key, value]) => {
-      formData.append(key, value);
+      if (key === 'category') {
+        formData.append('categoryId', value);
+      } else {
+        formData.append(key, value);
+      }
     });
 
     if (file) {
@@ -126,26 +128,14 @@ function ProductFormPage() {
           </div>
 
           <div className="inline-inputs">
-            <div>
-              <label htmlFor="price">Price</label>
+            <div style={{ width: '100%' }}>
+              <label htmlFor="price">Price (e.g. ₹250 to ₹350)</label>
               <input
                 id="price"
-                type="number"
-                min="0"
-                step="0.01"
+                type="text"
+                placeholder="250 to 350"
                 value={form.price}
                 onChange={(e) => updateField('price', e.target.value)}
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="stock">Stock</label>
-              <input
-                id="stock"
-                type="number"
-                min="0"
-                value={form.stock}
-                onChange={(e) => updateField('stock', e.target.value)}
                 required
               />
             </div>

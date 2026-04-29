@@ -5,23 +5,30 @@ import { toMediaUrl } from '../services/media';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919876543210';
 
-const formatPrice = (price) =>
-  new Intl.NumberFormat('en-IN', {
+const formatPrice = (price) => {
+  if (!price) return 'Contact for price';
+  if (isNaN(price)) return `₹${price}`; // e.g. "250 to 350" -> "₹250 to 350"
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     maximumFractionDigits: 2,
-  }).format(price || 0);
-
-const getStockLabel = (stock) => {
-  if (stock <= 0) return { label: 'Out of Stock', cls: 'badge out' };
-  if (stock <= 5) return { label: 'Low Stock', cls: 'badge low' };
-  return { label: 'In Stock', cls: 'badge in' };
+  }).format(price);
 };
 
-function ProductCard({ product, whatsappNumber = WHATSAPP_NUMBER, index = 0 }) {
+function ProductCard({
+  product,
+  whatsappNumber = WHATSAPP_NUMBER,
+  index = 0,
+  isWishlisted = false,
+  isCompared = false,
+  canCompare = true,
+  onToggleWishlist,
+  onToggleCompare,
+  onAddToCart,
+  onOrderWhatsApp,
+}) {
   const [qty, setQty] = useState(1);
   const [isHovered, setIsHovered] = useState(false);
-  const stockInfo = useMemo(() => getStockLabel(product.stock), [product.stock]);
   const productId = product.id;
 
   const message = `Hello, I want to order:%0AProduct: ${product.name}%0AQuantity: ${qty} ${
@@ -55,13 +62,27 @@ function ProductCard({ product, whatsappNumber = WHATSAPP_NUMBER, index = 0 }) {
         <Link to={`/products/${productId}`} className="product-link">
           <h3>{product.name}</h3>
         </Link>
-        <motion.span
-          className={stockInfo.cls}
-          animate={{ scale: isHovered ? 1.1 : 1 }}
-          transition={{ duration: 0.2 }}
-        >
-          {stockInfo.label}
-        </motion.span>
+        <div className="product-actions">
+          <button
+            type="button"
+            className={`icon-btn ${isWishlisted ? 'active' : ''}`}
+            onClick={() => onToggleWishlist?.(product)}
+            title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+            aria-label="Toggle wishlist"
+          >
+            {isWishlisted ? '❤' : '♡'}
+          </button>
+          <button
+            type="button"
+            className={`icon-btn ${isCompared ? 'active' : ''}`}
+            onClick={() => onToggleCompare?.(product)}
+            disabled={!isCompared && !canCompare}
+            title="Compare"
+            aria-label="Toggle compare"
+          >
+            ⇄
+          </button>
+        </div>
       </div>
       <p className="meta">
         {product.brand || 'Generic'} • {product.category?.name || 'Uncategorized'}
@@ -76,8 +97,7 @@ function ProductCard({ product, whatsappNumber = WHATSAPP_NUMBER, index = 0 }) {
         </motion.div>
       ) : null}
       <p className="price">{formatPrice(product.price)}</p>
-      <p className="description">{product.description || 'No description available.'}</p>
-      <p className="stock">Available Units: {product.stock}</p>
+      <p className="description">{product.description}</p>
       <div className="qty-row">
         <label htmlFor={`qty-${productId}`}>Qty</label>
         <input
@@ -88,16 +108,24 @@ function ProductCard({ product, whatsappNumber = WHATSAPP_NUMBER, index = 0 }) {
           onChange={(event) => setQty(Number(event.target.value || 1))}
         />
       </div>
-      <motion.a
-        className="wa-btn"
-        href={whatsappUrl}
-        target="_blank"
-        rel="noreferrer"
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-      >
-        Order on WhatsApp
-      </motion.a>
+      <div className="card-actions">
+        <button
+          type="button"
+          className="ghost"
+          onClick={() => onAddToCart?.(product, qty)}
+        >
+          Add to Cart
+        </button>
+        <motion.button
+          className="wa-btn"
+          type="button"
+          onClick={() => onOrderWhatsApp?.(product, qty)}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          Order on WhatsApp
+        </motion.button>
+      </div>
     </motion.article>
   );
 }

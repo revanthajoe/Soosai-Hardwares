@@ -8,8 +8,8 @@ function Footer() {
         </div>
         <div>
           <h4>Contact</h4>
-          <p>Phone: +91 98765 43210</p>
-          <p>Address: Main Road, Your City</p>
+          <p>Phone: +91 98421 23380</p>
+          <p>Address: 15, Bypass Rd, opposite KR Fuels, Gomathy Nagar, Manimoortheeswaram, Tirunelveli, Tamil Nadu 627001</p>
         </div>
       </div>
     </footer>

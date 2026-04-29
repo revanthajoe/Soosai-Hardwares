@@ -1,5 +1,5 @@
 const express = require('express');
-const { body, param } = require('express-validator');
+const { body, param, query } = require('express-validator');
 
 const {
   getProducts,
@@ -9,12 +9,23 @@ const {
   deleteProduct,
 } = require('../controllers/productController');
 const upload = require('../middlewares/uploadMiddleware');
+const { uploadToCloud } = require('../middlewares/uploadMiddleware');
+const { uploadLimiter } = require('../middlewares/rateLimitMiddleware');
 const { protect } = require('../middlewares/authMiddleware');
 const validateRequest = require('../utils/validateRequest');
 
 const router = express.Router();
 
-router.get('/', getProducts);
+router.get(
+  '/',
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer.'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100.'),
+  query('category').optional().isInt({ min: 1 }).withMessage('Category must be a valid integer.'),
+  query('featured').optional().isBoolean().withMessage('Featured must be a boolean.'),
+  query('q').optional().isString().trim().isLength({ min: 1 }).withMessage('Query must be a string.'),
+  validateRequest,
+  getProducts
+);
 
 router.get(
   '/:id',
@@ -26,11 +37,12 @@ router.get(
 router.post(
   '/',
   protect,
+  uploadLimiter,
   upload.single('image'),
+  uploadToCloud,
   body('name').trim().notEmpty().withMessage('Product name is required.'),
-  body('category').isInt({ min: 1 }).withMessage('Valid category is required.'),
-  body('price').isFloat({ min: 0 }).withMessage('Price must be a non-negative number.'),
-  body('stock').isInt({ min: 0 }).withMessage('Stock must be a non-negative integer.'),
+  body('categoryId').isInt({ min: 1 }).withMessage('Valid category is required.'),
+  body('price').trim().notEmpty().withMessage('Price range is required.'),
   validateRequest,
   createProduct
 );
@@ -39,7 +51,12 @@ router.put(
   '/:id',
   protect,
   param('id').isInt({ min: 1 }).withMessage('Invalid product id.'),
+  uploadLimiter,
   upload.single('image'),
+  uploadToCloud,
+  body('name').optional().trim().notEmpty().withMessage('Product name is required.'),
+  body('categoryId').optional().isInt({ min: 1 }).withMessage('Valid category is required.'),
+  body('price').optional().trim().notEmpty().withMessage('Price range cannot be empty.'),
   validateRequest,
   updateProduct
 );

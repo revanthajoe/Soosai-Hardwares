@@ -7,7 +7,6 @@ const { User } = require('../models');
 const { logger } = require('../config/logger');
 const asyncHandler = require('../utils/asyncHandler');
 const generateToken = require('../utils/generateToken');
-const { validate } = require('../middlewares/validationMiddleware');
 
 /**
  * @swagger
@@ -73,9 +72,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
   }
 
   // Find admin user
-  const user = await User.findOne({
-    where: { username, role: 'admin' },
-  });
+  const user = await User.findByUsername(username);
 
   if (!user) {
     logger.warn(`Login failed: user not found - ${username}`);
@@ -87,7 +84,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
   }
 
   // Check password
-  const isMatch = await user.matchPassword(password);
+  const isMatch = await User.matchPassword(password, user.password);
   if (!isMatch) {
     logger.warn(`Login failed: incorrect password - ${username}`);
     return res.status(401).json({
@@ -111,7 +108,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
         id: user.id,
         username: user.username,
         role: user.role,
-        createdAt: user.createdAt,
+        createdAt: user.created_at,
       },
     },
   });

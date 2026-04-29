@@ -1,38 +1,29 @@
-const { Sequelize } = require('sequelize');
+const { createClient } = require('@supabase/supabase-js');
+const { Pool } = require('pg');
 
-const useSsl = process.env.PG_SSL === 'true';
+// Supabase client for data operations
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
-const sequelize = process.env.DATABASE_URL
-  ? new Sequelize(process.env.DATABASE_URL, {
-      dialect: 'postgres',
-      logging: false,
-      dialectOptions: useSsl
-        ? {
-            ssl: {
-              require: true,
-              rejectUnauthorized: false,
-            },
-          }
-        : {},
-    })
-  : new Sequelize(
-      process.env.PGDATABASE || 'soosai_hardwares',
-      process.env.PGUSER || 'postgres',
-      process.env.PGPASSWORD || '',
-      {
-        host: process.env.PGHOST || '127.0.0.1',
-        port: Number(process.env.PGPORT || 5432),
-        dialect: 'postgres',
-        logging: false,
-      }
-    );
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in environment variables.');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Raw pg pool for schema initialization and complex queries
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: process.env.PG_SSL === 'true' ? { rejectUnauthorized: false } : false,
+});
 
 const connectDB = async () => {
   try {
-    await sequelize.authenticate();
-    const alter = process.env.DB_SYNC_ALTER === 'true';
-    await sequelize.sync({ alter });
-    console.log('PostgreSQL connected successfully.');
+    const client = await pool.connect();
+    await client.query('SELECT NOW()');
+    client.release();
+    console.log('PostgreSQL (Supabase) connected successfully.');
   } catch (error) {
     console.error('PostgreSQL connection failed:', error.message);
     process.exit(1);
@@ -40,4 +31,5 @@ const connectDB = async () => {
 };
 
 module.exports = connectDB;
-module.exports.sequelize = sequelize;
+module.exports.supabase = supabase;
+module.exports.pool = pool;

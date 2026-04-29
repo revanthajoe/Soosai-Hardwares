@@ -3,6 +3,7 @@ const path = require('path');
 const dotenv = require('dotenv');
 const compression = require('compression');
 const morgan = require('morgan');
+const cookieParser = require('cookie-parser');
 require('express-async-errors');
 
 // Configuration
@@ -15,6 +16,8 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
+const analyticsRoutes = require('./routes/analyticsRoutes');
 
 // Utilities
 const ensureDefaultAdmin = require('./utils/ensureDefaultAdmin');
@@ -23,6 +26,8 @@ const ensureDefaultAdmin = require('./utils/ensureDefaultAdmin');
 const { errorHandler, notFound } = require('./middlewares/errorMiddleware');
 const { helmetConfig, customSecurityHeaders, corsOptions } = require('./middlewares/securityMiddleware');
 const { apiLimiter, authLimiter } = require('./middlewares/rateLimitMiddleware');
+const { sanitizeInputs } = require('./middlewares/sanitizeMiddleware');
+const { csrfProtection, csrfTokenHandler } = require('./middlewares/csrfMiddleware');
 const { logger, morganFormat, morganOptions } = require('./config/logger');
 
 // Swagger
@@ -45,6 +50,13 @@ const cors = require('cors');
 app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(cookieParser());
+app.use(sanitizeInputs);
+
+if (process.env.ENABLE_CSRF === 'true') {
+  app.use(csrfProtection);
+  app.get('/api/csrf-token', csrfTokenHandler);
+}
 
 // ========== STATIC FILES ==========
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -73,6 +85,8 @@ app.use('/api/auth', authLimiter, authRoutes);
 // Product and category routes
 app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
+app.use('/api/reviews', reviewRoutes);
+app.use('/api/analytics', analyticsRoutes);
 
 // ========== ERROR HANDLING ==========
 app.use(notFound);
@@ -84,6 +98,11 @@ const startServer = async () => {
     // Connect to database
     await connectDB();
     logger.info('✓ Database connected successfully');
+
+    // Initialize database schema (create tables if not exist)
+    const { initSchema } = require('./models');
+    await initSchema();
+    logger.info('✓ Database schema initialized');
 
     // Ensure default admin user exists
     await ensureDefaultAdmin();
@@ -117,6 +136,8 @@ process.on('uncaughtException', (err) => {
   process.exit(1);
 });
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
 
-module.exports = app;
+module.exports = { app, startServer };

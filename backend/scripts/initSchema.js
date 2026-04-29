@@ -3,17 +3,20 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
 const connectDB = require('../config/db');
-const ensureDefaultAdmin = require('../utils/ensureDefaultAdmin');
+const { initSchema } = require('../models');
 
 const run = async () => {
+  console.log('Connecting to database...');
   await connectDB();
-  const { initSchema } = require('../models');
+  
+  console.log('Initializing schema...');
   await initSchema();
-  await ensureDefaultAdmin();
+  
+  console.log('Schema initialization complete.');
   process.exit(0);
 };
 
 run().catch((error) => {
-  console.error(error.message);
+  console.error('Failed to initialize schema:', error.message);
   process.exit(1);
 });
