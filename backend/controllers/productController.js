@@ -113,6 +113,38 @@ const getProducts = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
+ * /api/products/brands:
+ *   get:
+ *     summary: Get all unique brands
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: List of brands
+ */
+const getBrands = asyncHandler(async (req, res) => {
+  const cacheKey = 'all_brands';
+  if (cache.has(cacheKey)) {
+    const cachedData = cache.get(cacheKey);
+    if (cachedData.expiresAt > Date.now()) {
+      return res.status(200).json(cachedData.data);
+    }
+    cache.delete(cacheKey);
+  }
+
+  const brands = await Product.getBrands();
+
+  const responseData = {
+    success: true,
+    data: brands,
+  };
+
+  cache.set(cacheKey, { data: responseData, expiresAt: Date.now() + 300000 }); // Cache for 5 minutes
+
+  res.status(200).json(responseData);
+});
+
+/**
+ * @swagger
  * /api/products/{id}:
  *   get:
  *     summary: Get product by ID
@@ -517,6 +549,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
 
 module.exports = {
   getProducts,
+  getBrands,
   getProductById,
   getProductBySlug,
   createProduct,

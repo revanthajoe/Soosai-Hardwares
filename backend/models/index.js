@@ -276,6 +276,18 @@ const Product = {
     return count || 0;
   },
 
+  async getBrands() {
+    const { data, error } = await supabase
+      .from('products')
+      .select('brand')
+      .neq('brand', '');
+    if (error) throw error;
+    
+    // Get unique brands
+    const brands = [...new Set(data.map(item => item.brand))];
+    return brands.sort();
+  },
+
   /**
    * Reshape Supabase joined data to match the old Sequelize response format.
    * Converts snake_case to camelCase and moves the nested category.

@@ -3,6 +3,7 @@ const { body, param, query } = require('express-validator');
 
 const {
   getProducts,
+  getBrands,
   getProductById,
   createProduct,
   updateProduct,
@@ -26,6 +27,8 @@ router.get(
   validateRequest,
   getProducts
 );
+
+router.get('/brands', getBrands);
 
 router.get(
   '/:id',

@@ -79,6 +79,13 @@ export const api = {
     setTimeout(() => cache.delete(cacheKey), 60000); // 1 minute cache
     return res;
   },
+  getBrands: async () => {
+    if (cache.has('/products/brands')) return cache.get('/products/brands');
+    const res = await request('/products/brands');
+    cache.set('/products/brands', res);
+    setTimeout(() => cache.delete('/products/brands'), 60000); // 1 minute cache
+    return res;
+  },
   getProductById: (id) => request(`/products/${id}`),
   createProduct: (formData) =>
     request('/products', {

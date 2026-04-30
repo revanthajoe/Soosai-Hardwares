@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import ProductList from '../components/catalog/ProductList';
 import ProductFilters from '../components/catalog/ProductFilters';
@@ -14,6 +15,7 @@ const CART_KEY = 'soosai:cart';
 const PER_PAGE = 9;
 
 function ProductsPage() {
+  const location = useLocation();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [search, setSearch] = useState('');
@@ -46,8 +48,26 @@ function ProductsPage() {
         console.error('Failed to load categories', err);
       }
     };
+    const loadBrands = async () => {
+      try {
+        const res = await api.getBrands();
+        setBrands(res.data || []);
+      } catch (err) {
+        console.error('Failed to load brands', err);
+      }
+    };
     loadCategories();
+    loadBrands();
   }, []);
+
+  // Sync URL parameters to local state when they change
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    setBrand(params.get('brand') || '');
+    setSearch(params.get('q') || '');
+    setCategory(params.get('category') || '');
+    setSortBy(params.get('sortBy') || 'featured');
+  }, [location.search]);
 
   useEffect(() => {
     const loadProducts = async () => {

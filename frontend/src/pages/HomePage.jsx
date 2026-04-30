@@ -54,6 +54,27 @@ function HomePage() {
         {!loading && !error ? <ProductList products={featuredProducts} /> : null}
       </section>
 
+      <section className="panel" style={{ padding: 0 }}>
+        <div className="toolbar" style={{ padding: '1rem 1rem 0' }}>
+          <h2>Visit Our Store</h2>
+        </div>
+        <div style={{ padding: '1rem' }}>
+          <p style={{ marginBottom: '1rem' }}>
+            15, Bypass Rd, opposite KR Fuels, Gomathy Nagar, Manimoortheeswaram, Tirunelveli, Tamil Nadu 627001
+          </p>
+          <iframe
+            src="https://maps.google.com/maps?q=Soosai+Hardwares,+15,+Bypass+Rd,+Tirunelveli,+Tamil+Nadu&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            width="100%"
+            height="400"
+            style={{ border: 0, borderRadius: '8px' }}
+            allowFullScreen=""
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            title="Store Location"
+          ></iframe>
+        </div>
+      </section>
+
       <ReviewsSection targetId="shop" title="What our customers say about Soosai Hardwares" />
     </div>
   );

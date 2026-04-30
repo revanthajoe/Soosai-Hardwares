@@ -105,6 +105,73 @@
   animation: slideInRight 0.5s ease-out;
 }
 
+/* Nav Dropdown */
+.nav-dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.nav-dropdown-trigger {
+  color: #1b4b3b;
+  font-weight: 600;
+  padding: 0.4rem 0.8rem;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+:root[data-theme="dark"] .nav-dropdown-trigger {
+  color: var(--text);
+}
+
+.nav-dropdown-trigger:hover {
+  background: var(--accent-light);
+}
+
+.nav-dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--bg-primary);
+  min-width: 160px;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  z-index: 20;
+  overflow: hidden;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.nav-dropdown:hover .nav-dropdown-content {
+  display: flex;
+  flex-direction: column;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.nav-dropdown-content a {
+  color: var(--text) !important;
+  padding: 0.6rem 1rem !important;
+  text-decoration: none;
+  display: block;
+  border-radius: 0 !important;
+}
+
+.nav-dropdown-content a:hover {
+  background-color: var(--accent-light);
+}
+.nav-dropdown-content a::after {
+  display: none;
+}
+.nav-dropdown-content a.view-all-brands {
+  font-weight: 700;
+  color: var(--accent) !important;
+}
+
 /* Theme Toggle Button */
 .theme-toggle {
   background: transparent;
