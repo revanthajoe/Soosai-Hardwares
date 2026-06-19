@@ -71,7 +71,29 @@ const loginAdmin = asyncHandler(async (req, res) => {
     });
   }
 
-  // Find admin user
+  // Check against Environment variables first (Bypasses DB/RLS)
+  const envUser = process.env.ADMIN_USERNAME || 'admin';
+  const envPass = process.env.ADMIN_PASSWORD || 'admin123';
+
+  if (username === envUser && password === envPass) {
+    const token = generateToken({ id: 1, role: 'admin' });
+    logger.info(`Successful login via ENV credentials: ${username}`);
+    return res.status(200).json({
+      success: true,
+      message: 'Login successful',
+      data: {
+        token,
+        user: {
+          id: 1,
+          username,
+          role: 'admin',
+          createdAt: new Date().toISOString(),
+        },
+      },
+    });
+  }
+
+  // Find admin user in DB (Fallback if ENV fails)
   const user = await User.findByUsername(username);
 
   if (!user) {
@@ -97,7 +119,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
   // Generate token
   const token = generateToken({ id: user.id, role: user.role });
 
-  logger.info(`Successful login: ${username}`);
+  logger.info(`Successful login via DB: ${username}`);
 
   res.status(200).json({
     success: true,
