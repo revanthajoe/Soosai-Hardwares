@@ -4,70 +4,35 @@
  */
 
 const bcrypt = require('bcryptjs');
-const { supabase, pool } = require('../config/db');
+const { supabase } = require('../config/db');
 
 // ============================================================
 // Schema Initialization (run once on startup)
 // ============================================================
+/**
+ * Verify that expected tables exist via the Supabase REST API.
+ * Tables must be created via the Supabase SQL Editor / Dashboard since
+ * direct PostgreSQL TCP connections are not available on the free tier.
+ */
 const initSchema = async () => {
-  const client = await pool.connect();
-  try {
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(255) NOT NULL UNIQUE,
-        password VARCHAR(255) NOT NULL,
-        role VARCHAR(10) NOT NULL DEFAULT 'admin' CHECK (role IN ('admin')),
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
+  // Verify key tables are accessible
+  const tables = ['users', 'categories', 'products', 'reviews', 'analytics'];
+  for (const table of tables) {
+    const { error } = await supabase.from(table).select('id').limit(1);
+    if (error) {
+      console.warn(`Table '${table}' check failed: ${error.message}`);
+      console.warn(`Please create tables via the Supabase SQL Editor.`);
+    }
+  }
 
-      CREATE TABLE IF NOT EXISTS categories (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(100) NOT NULL UNIQUE,
-        slug VARCHAR(100) NOT NULL UNIQUE,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-
-      CREATE TABLE IF NOT EXISTS products (
-        id SERIAL PRIMARY KEY,
-        name VARCHAR(200) NOT NULL,
-        slug VARCHAR(200) NOT NULL UNIQUE,
-        category_id INTEGER NOT NULL REFERENCES categories(id),
-        brand VARCHAR(100) NOT NULL DEFAULT '',
-        unit VARCHAR(20) NOT NULL DEFAULT 'piece',
-        price VARCHAR(100) NOT NULL DEFAULT 'Contact for price',
-        nickname VARCHAR(200) NOT NULL DEFAULT '',
-        description TEXT NOT NULL DEFAULT '',
-        image VARCHAR(500) NOT NULL DEFAULT '',
-        is_active BOOLEAN NOT NULL DEFAULT TRUE,
-        is_featured BOOLEAN NOT NULL DEFAULT FALSE,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-
-      CREATE TABLE IF NOT EXISTS reviews (
-        id SERIAL PRIMARY KEY,
-        product_id INTEGER REFERENCES products(id) ON DELETE CASCADE,
-        author_name VARCHAR(100) NOT NULL,
-        rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-        comment TEXT,
-        created_at TIMESTAMPTZ DEFAULT NOW(),
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-
-      CREATE TABLE IF NOT EXISTS analytics (
-        id VARCHAR(50) PRIMARY KEY,
-        value INTEGER NOT NULL DEFAULT 0,
-        updated_at TIMESTAMPTZ DEFAULT NOW()
-      );
-
-      INSERT INTO analytics (id, value) VALUES ('visits', 0) ON CONFLICT (id) DO NOTHING;
-      INSERT INTO analytics (id, value) VALUES ('whatsapp_orders', 0) ON CONFLICT (id) DO NOTHING;
-    `);
-  } finally {
-    client.release();
+  // Ensure default analytics rows exist
+  const { data: existing } = await supabase.from('analytics').select('id');
+  const existingIds = (existing || []).map(r => r.id);
+  const defaults = ['visits', 'whatsapp_orders'];
+  for (const id of defaults) {
+    if (!existingIds.includes(id)) {
+      await supabase.from('analytics').upsert({ id, value: 0 }, { onConflict: 'id' });
+    }
   }
 };
 
@@ -442,23 +407,28 @@ const Analytics = {
   },
 
   async increment(id) {
-    // Supabase rpc or raw query is best for atomic increment, but let's use pool for simplicity since we want an atomic update
-    const client = await pool.connect();
-    try {
-      const result = await client.query(
-        'UPDATE analytics SET value = value + 1, updated_at = NOW() WHERE id = $1 RETURNING value',
-        [id]
-      );
-      return result.rows[0]?.value || 0;
-    } finally {
-      client.release();
-    }
+    // Fetch current value, increment, and update via Supabase client
+    const { data: current, error: fetchErr } = await supabase
+      .from('analytics')
+      .select('value')
+      .eq('id', id)
+      .single();
+    if (fetchErr) throw fetchErr;
+
+    const newValue = (current?.value || 0) + 1;
+    const { data, error } = await supabase
+      .from('analytics')
+      .update({ value: newValue, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select('value')
+      .single();
+    if (error) throw error;
+    return data?.value || newValue;
   }
 };
 
 module.exports = {
   supabase,
-  pool,
   initSchema,
   Category,
   Product,

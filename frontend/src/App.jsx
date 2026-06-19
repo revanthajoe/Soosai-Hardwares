@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { Suspense, useState, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import { supabase } from './utils/supabase';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -17,28 +17,31 @@ import AnalyticsTracker from './components/AnalyticsTracker';
 import './App.css';
 
 function App() {
-  const [todos, setTodos] = useState([]);
+  const [supabaseConnected, setSupabaseConnected] = useState(false);
 
   useEffect(() => {
-    async function getTodos() {
-      const { data: todos } = await supabase.from('todos').select();
-
-      if (todos) {
-        setTodos(todos);
+    // Test Supabase connection
+    async function testSupabaseConnection() {
+      try {
+        const { data, error } = await supabase.from('products').select('count');
+        if (error) {
+          console.warn('Supabase connection test failed:', error.message);
+          setSupabaseConnected(false);
+        } else {
+          console.log('✓ Supabase connected successfully');
+          setSupabaseConnected(true);
+        }
+      } catch (err) {
+        console.warn('Supabase connection error:', err.message);
+        setSupabaseConnected(false);
       }
     }
 
-    getTodos();
+    testSupabaseConnection();
   }, []);
 
   return (
-    <>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.name}</li>
-        ))}
-      </ul>
-      <ErrorBoundary>
+    <ErrorBoundary>
       <ThemeProvider>
         <BrowserRouter>
           <AnalyticsTracker />
@@ -83,7 +86,6 @@ function App() {
         </BrowserRouter>
       </ThemeProvider>
     </ErrorBoundary>
-    </>
   );
 }
 

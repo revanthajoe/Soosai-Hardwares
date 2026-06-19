@@ -97,18 +97,32 @@ const startServer = async () => {
   try {
     // Connect to database
     await connectDB();
-    logger.info('✓ Database connected successfully');
 
-    // Initialize database schema (create tables if not exist)
-    const { initSchema } = require('./models');
-    await initSchema();
-    logger.info('✓ Database schema initialized');
+    const { isConnected } = require('./config/db');
+    if (isConnected()) {
+      logger.info('✓ Database connected successfully');
 
-    // Ensure default admin user exists
-    await ensureDefaultAdmin();
-    logger.info('✓ Default admin user verified');
+      // Initialize database schema (create tables if not exist)
+      try {
+        const { initSchema } = require('./models');
+        await initSchema();
+        logger.info('✓ Database schema initialized');
+      } catch (schemaErr) {
+        logger.warn(`⚠ Schema initialization failed: ${schemaErr.message}`);
+      }
 
-    // Start server
+      // Ensure default admin user exists
+      try {
+        await ensureDefaultAdmin();
+        logger.info('✓ Default admin user verified');
+      } catch (adminErr) {
+        logger.warn(`⚠ Default admin setup failed: ${adminErr.message}`);
+      }
+    } else {
+      logger.warn('⚠ Server starting without database connection');
+    }
+
+    // Start server regardless of DB state
     app.listen(PORT, () => {
       logger.info(`✓ Server running on port ${PORT}`);
       logger.info(`✓ Environment: ${process.env.NODE_ENV}`);
