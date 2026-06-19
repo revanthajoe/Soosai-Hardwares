@@ -807,7 +807,26 @@ button,
   .nav-wrap {
     flex-wrap: wrap;
     justify-content: space-between;
+    align-items: center;
     padding: 0.8rem 0;
+  }
+
+  .brand {
+    order: 1;
+    font-size: 1rem; /* slightly smaller on mobile */
+  }
+
+  .nav-actions {
+    order: 2;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .nav-actions .button-link {
+    padding: 0.4rem 0.8rem; /* smaller padding so it fits */
+    min-height: auto;
+    font-size: 0.9rem;
   }
 
   .nav-links {
@@ -818,10 +837,6 @@ button,
     padding-top: 0.8rem;
     margin-top: 0.5rem;
     border-top: 1px solid var(--border-color);
-  }
-
-  .nav-actions {
-    order: 2;
   }
 
   .button-link,
