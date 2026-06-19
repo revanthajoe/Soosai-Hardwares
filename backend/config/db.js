@@ -4,22 +4,16 @@ dns.setDefaultResultOrder('ipv4first');
 const { createClient } = require('@supabase/supabase-js');
 const { Pool } = require('pg');
 
-// Supabase client for data operations (optional)
+// Supabase client for data operations
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY;
 
-let supabase = null;
-if (supabaseUrl && supabaseKey) {
-  try {
-    supabase = createClient(supabaseUrl, supabaseKey);
-    console.log('Supabase client initialized.');
-  } catch (err) {
-    console.warn('Failed to initialize Supabase client:', err.message);
-    supabase = null;
-  }
-} else {
-  console.warn('SUPABASE_URL or SUPABASE_SERVICE_KEY not set; Supabase client disabled.');
+if (!supabaseUrl || !supabaseKey) {
+  console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_KEY in environment variables.');
+  process.exit(1);
 }
+
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Raw pg pool for schema initialization and complex queries
 const pool = new Pool({

@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { Suspense } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
+import { supabase } from './utils/supabase';
 import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/layout/Footer';
 import Navbar from './components/layout/Navbar';
@@ -16,6 +17,29 @@ import AnalyticsTracker from './components/AnalyticsTracker';
 import './App.css';
 
 function App() {
+  const [supabaseConnected, setSupabaseConnected] = useState(false);
+
+  useEffect(() => {
+    // Test Supabase connection
+    async function testSupabaseConnection() {
+      try {
+        const { data, error } = await supabase.from('products').select('count');
+        if (error) {
+          console.warn('Supabase connection test failed:', error.message);
+          setSupabaseConnected(false);
+        } else {
+          console.log('✓ Supabase connected successfully');
+          setSupabaseConnected(true);
+        }
+      } catch (err) {
+        console.warn('Supabase connection error:', err.message);
+        setSupabaseConnected(false);
+      }
+    }
+
+    testSupabaseConnection();
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider>
