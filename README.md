@@ -11,10 +11,10 @@ A complete MERN hardware shop system where:
 
 ## Tech Stack
 
-- Frontend: React + Vite + React Router
-- Backend: Node.js + Express
-- Database: PostgreSQL
-- Image Upload: Multer (local storage)
+- Frontend: React + Vite + React Router (Vercel)
+- Backend: Node.js + Express (Render)
+- Database: PostgreSQL (Supabase)
+- Image Upload: Cloudinary
 - Auth: JWT
 
 ## Project Structure
@@ -155,13 +155,12 @@ You can change these in environment variables:
 - ADMIN_USERNAME
 - ADMIN_PASSWORD
 
-## Deployment (Free)
+## Deployment
 
-## PostgreSQL (Free)
-
-1. Create a free PostgreSQL instance (Render, Supabase, Neon, ElephantSQL, etc.).
-2. Copy the connection string.
-3. Set DATABASE_URL in backend environment variables.
+- **Frontend** → Vercel
+- **Backend** → Render
+- **Database** → Supabase
+- **Images** → Cloudinary
 
 ## Backend on Render (Free)
 
