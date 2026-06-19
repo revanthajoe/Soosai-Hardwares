@@ -5,8 +5,8 @@ import { auth } from '../services/auth';
 import Alert from '../components/common/Alert';
 
 function AdminLoginPage() {
-  const [username, setUsername] = useState('admin');
-  const [password, setPassword] = useState('admin123');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -19,12 +19,19 @@ function AdminLoginPage() {
     setError('');
     setLoading(true);
 
+    // Clear any stale session before attempting login
+    auth.clearSession();
+
     try {
       const response = await api.login({ username, password });
-      auth.setSession(response.data.token, response.data.user);
-      navigate(from, { replace: true });
+      if (response.success && response.data?.token) {
+        auth.setSession(response.data.token, response.data.user);
+        navigate(from, { replace: true });
+      } else {
+        setError('Login failed. Please check your credentials.');
+      }
     } catch (err) {
-      setError(err.message || 'Login failed.');
+      setError(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }

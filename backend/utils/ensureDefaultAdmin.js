@@ -2,7 +2,7 @@ const { User } = require('../models');
 
 const ensureDefaultAdmin = async () => {
   const username = process.env.ADMIN_USERNAME || 'admin';
-  const password = process.env.ADMIN_PASSWORD || 'admin123';
+  const password = process.env.ADMIN_PASSWORD || 'Revanth2006';
 
   try {
     const existing = await User.findByUsername(username);

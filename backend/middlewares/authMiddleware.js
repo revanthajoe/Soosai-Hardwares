@@ -19,14 +19,33 @@ const protect = asyncHandler(async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.id);
 
-    if (!user || user.role !== 'admin') {
+    // Try to find user in DB first
+    let user = null;
+    try {
+      user = await User.findById(decoded.id);
+    } catch {
+      // DB lookup may fail due to RLS — fall through to token-based auth
+    }
+
+    if (user) {
+      if (user.role !== 'admin') {
+        res.status(403);
+        throw new Error('Forbidden: admin access required.');
+      }
+      req.user = user;
+    } else if (decoded.role === 'admin') {
+      // Fallback: trust the JWT payload (ENV-based login)
+      req.user = {
+        id: decoded.id,
+        username: process.env.ADMIN_USERNAME || 'admin',
+        role: 'admin',
+      };
+    } else {
       res.status(403);
       throw new Error('Forbidden: admin access required.');
     }
 
-    req.user = user;
     next();
   } catch (error) {
     if (res.statusCode === 403) {
@@ -40,3 +59,4 @@ const protect = asyncHandler(async (req, res, next) => {
 module.exports = {
   protect,
 };
+

@@ -73,7 +73,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
   // Check against Environment variables first (Bypasses DB/RLS)
   const envUser = process.env.ADMIN_USERNAME || 'admin';
-  const envPass = process.env.ADMIN_PASSWORD || 'admin123';
+  const envPass = process.env.ADMIN_PASSWORD || 'Revanth2006';
 
   if (username === envUser && password === envPass) {
     const token = generateToken({ id: 1, role: 'admin' });
