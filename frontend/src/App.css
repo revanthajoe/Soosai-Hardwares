@@ -806,14 +806,22 @@ button,
 
   .nav-wrap {
     flex-wrap: wrap;
-    justify-content: center;
-    padding: 0.5rem 0;
+    justify-content: space-between;
+    padding: 0.8rem 0;
   }
 
   .nav-links {
     order: 3;
     width: 100%;
-    justify-content: center;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-top: 0.8rem;
+    margin-top: 0.5rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .nav-actions {
+    order: 2;
   }
 
   .button-link,
