@@ -8,7 +8,7 @@ const emptyForm = {
   category: '',
   brand: '',
   unit: 'piece',
-  price: '',
+
   nickname: '',
   description: '',
   isFeatured: false,
@@ -39,7 +39,7 @@ function ProductFormPage() {
             category: item.category?.id || '',
             brand: item.brand || '',
             unit: item.unit || 'piece',
-            price: item.price ?? '',
+
             nickname: item.nickname || '',
             description: item.description || '',
             isFeatured: Boolean(item.isFeatured),
@@ -137,19 +137,7 @@ function ProductFormPage() {
             </div>
           </div>
 
-          <div className="inline-inputs">
-            <div style={{ width: '100%' }}>
-              <label htmlFor="price">Price (e.g. ₹250 to ₹350)</label>
-              <input
-                id="price"
-                type="text"
-                placeholder="250 to 350"
-                value={form.price}
-                onChange={(e) => updateField('price', e.target.value)}
-                required
-              />
-            </div>
-          </div>
+
 
           <label htmlFor="description">Description</label>
           <textarea
