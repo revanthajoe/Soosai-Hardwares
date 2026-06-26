@@ -24,7 +24,7 @@ export default function WhatsAppOrderModal({ isOpen, onClose, items }) {
       message += `- ${name} (x${qty})\n`;
     });
 
-
+    message += `\nPlease check the exact pricing and availability.`;
 
     const num = WHATSAPP_NUMBER.startsWith('91') ? WHATSAPP_NUMBER : `91${WHATSAPP_NUMBER}`;
     const whatsappUrl = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;

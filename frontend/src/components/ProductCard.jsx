@@ -25,7 +25,7 @@ function ProductCard({
 
   const message = `Hello, I want to order:%0AProduct: ${product.name}%0AQuantity: ${qty} ${
     product.unit || 'piece'
-  }`;
+  }%0A%0APlease check the exact pricing and availability.`;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
 
   const variants = {
