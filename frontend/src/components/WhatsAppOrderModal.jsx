@@ -1,20 +1,18 @@
-import { useState } from 'react';
 import { api } from '../services/api';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919842123380';
 
 export default function WhatsAppOrderModal({ isOpen, onClose, items }) {
-  const [customerName, setCustomerName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [address, setAddress] = useState('');
-
   if (!isOpen) return null;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const form = e.target;
+    const customerName = form.customerName.value;
+    const phone = form.phone.value;
+    const address = form.address.value;
 
-    // Generate message
-    let message = `*New Order Details*\n`;
+    let message = `*New Order from Soosai Hardwares Website*\n`;
     message += `Name: ${customerName}\n`;
     message += `Phone: ${phone}\n`;
     message += `Address: ${address}\n\n`;
@@ -29,62 +27,40 @@ export default function WhatsAppOrderModal({ isOpen, onClose, items }) {
 
     message += `\n*Please confirm exact pricing and availability.*`;
 
-    const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+    const num = WHATSAPP_NUMBER.startsWith('91') ? WHATSAPP_NUMBER : `91${WHATSAPP_NUMBER}`;
+    const whatsappUrl = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
 
-    // Track analytics
     api.incrementOrder().catch(console.error);
 
-    // Open WhatsApp
     window.open(whatsappUrl, '_blank');
     onClose();
   };
 
   return (
-    <div className="modal-backdrop" style={{
-      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex',
-      alignItems: 'center', justifyContent: 'center', zIndex: 1000
-    }}>
-      <div className="modal-content" style={{
-        background: '#fff', padding: '2rem', borderRadius: '8px',
-        width: '100%', maxWidth: '400px',
-        boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-      }}>
-        <h2 style={{ marginBottom: '1rem', color: '#1a1a1a' }}>Order Details</h2>
-        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+    <div className="modal-backdrop" onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="modal-content">
+        <h2 style={{ marginBottom: '1rem' }}>Order Details</h2>
+        <div style={{ marginBottom: '1rem' }}>
+          <p className="muted" style={{ margin: 0, fontSize: '0.9rem' }}>
+            {items.length} item{items.length !== 1 ? 's' : ''} selected
+          </p>
+        </div>
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.25rem', color: '#555' }}>Name *</label>
-            <input 
-              type="text" 
-              required 
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }} 
-            />
+            <label className="modal-label">Name *</label>
+            <input name="customerName" type="text" required autoComplete="name" placeholder="Your full name" />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.25rem', color: '#555' }}>Phone Number *</label>
-            <input 
-              type="tel" 
-              required 
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }} 
-            />
+            <label className="modal-label">Phone Number *</label>
+            <input name="phone" type="tel" required autoComplete="tel" placeholder="+91 98421 23380" />
           </div>
           <div>
-            <label style={{ display: 'block', marginBottom: '0.25rem', color: '#555' }}>Delivery Address *</label>
-            <textarea 
-              required 
-              rows="3"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-              style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }} 
-            ></textarea>
+            <label className="modal-label">Delivery Address *</label>
+            <textarea name="address" required rows="3" autoComplete="street-address" placeholder="Your delivery address"></textarea>
           </div>
-          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
             <button type="button" className="ghost" onClick={onClose} style={{ flex: 1 }}>Cancel</button>
-            <button type="submit" className="button-link" style={{ flex: 1 }}>Continue to WhatsApp</button>
+            <button type="submit" className="wa-btn" style={{ flex: 1 }}>Continue to WhatsApp</button>
           </div>
         </form>
       </div>

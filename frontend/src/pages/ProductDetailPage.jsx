@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { api } from '../services/api';
 import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
@@ -8,7 +8,7 @@ import WhatsAppOrderModal from '../components/WhatsAppOrderModal';
 import { toMediaUrl } from '../services/media';
 import { loadJSON, saveJSON } from '../utils/storage';
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919876543210';
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919842123380';
 const WISHLIST_KEY = 'soosai:wishlist';
 const CART_KEY = 'soosai:cart';
 

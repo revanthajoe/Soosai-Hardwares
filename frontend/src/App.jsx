@@ -1,7 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
-import { supabase } from './utils/supabase';
 import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/layout/Footer';
 import Navbar from './components/layout/Navbar';
@@ -17,71 +16,27 @@ import AnalyticsTracker from './components/AnalyticsTracker';
 import './App.css';
 
 function App() {
-  const [supabaseConnected, setSupabaseConnected] = useState(false);
-
-  useEffect(() => {
-    // Test Supabase connection
-    async function testSupabaseConnection() {
-      try {
-        const { data, error } = await supabase.from('products').select('count');
-        if (error) {
-          console.warn('Supabase connection test failed:', error.message);
-          setSupabaseConnected(false);
-        } else {
-          console.log('✓ Supabase connected successfully');
-          setSupabaseConnected(true);
-        }
-      } catch (err) {
-        console.warn('Supabase connection error:', err.message);
-        setSupabaseConnected(false);
-      }
-    }
-
-    testSupabaseConnection();
-  }, []);
-
   return (
     <ErrorBoundary>
       <ThemeProvider>
         <BrowserRouter>
           <AnalyticsTracker />
           <Navbar />
-          <Suspense fallback={<div className="loading-skeleton"></div>}>
-            <Routes>
-        <Route path="/" element={<HomePage />} />
-        <Route path="/products" element={<ProductsPage />} />
-        <Route path="/products/:id" element={<ProductDetailPage />} />
-        <Route path="/admin/login" element={<AdminLoginPage />} />
-
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute>
-              <AdminDashboardPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/products/new"
-          element={
-            <ProtectedRoute>
-              <ProductFormPage />
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/products/:id/edit"
-          element={
-            <ProtectedRoute>
-              <ProductFormPage />
-            </ProtectedRoute>
-          }
-        />
-
-        <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
-        <Route path="*" element={<NotFoundPage />} />
-            </Routes>
-          </Suspense>
+          <main style={{ flex: 1 }}>
+            <Suspense fallback={<div className="loading-skeleton" style={{ margin: '1rem' }}></div>}>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/products" element={<ProductsPage />} />
+                <Route path="/products/:id" element={<ProductDetailPage />} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
+                <Route path="/admin/products/new" element={<ProtectedRoute><ProductFormPage /></ProtectedRoute>} />
+                <Route path="/admin/products/:id/edit" element={<ProtectedRoute><ProductFormPage /></ProtectedRoute>} />
+                <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </Suspense>
+          </main>
           <Footer />
         </BrowserRouter>
       </ThemeProvider>

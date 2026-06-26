@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { api } from '../services/api';
 import ProductList from '../components/catalog/ProductList';
@@ -106,10 +106,6 @@ function ProductsPage() {
   }, []);
 
   // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [search, category, brand, sortBy]);
-
   useEffect(() => {
     setPage(1);
   }, [search, category, brand, sortBy]);

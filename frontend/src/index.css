@@ -13,7 +13,16 @@
   --shadow-lg: 0 16px 34px rgba(10, 58, 45, 0.28);
   --accent: #0b7a54;
   --accent-light: #e8f6ee;
-  --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --danger: #d32f2f;
+  --danger-light: #ffeef1;
+  --success: #0d6b43;
+  --success-light: #d8fbe8;
+  --input-bg: #ffffff;
+  --input-border: rgba(10, 60, 44, 0.2);
+  --modal-bg: #ffffff;
+  --modal-text: #1a1a1a;
+  --modal-label: #555;
 }
 
 /* Dark Theme */
@@ -29,6 +38,15 @@
   --shadow-lg: 0 16px 34px rgba(0, 0, 0, 0.5);
   --accent: #00d084;
   --accent-light: rgba(0, 208, 132, 0.1);
+  --danger: #ff5252;
+  --danger-light: rgba(244, 67, 54, 0.1);
+  --success: #4caf50;
+  --success-light: rgba(76, 175, 80, 0.15);
+  --input-bg: #2a2f37;
+  --input-border: rgba(255, 255, 255, 0.15);
+  --modal-bg: #1e2329;
+  --modal-text: #e0e6e9;
+  --modal-label: #aab;
 }
 
 * {
@@ -39,12 +57,16 @@ body {
   margin: 0;
   min-height: 100vh;
   color: var(--text);
-  font-family: 'IBM Plex Sans', sans-serif;
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: var(--bg-top);
   background-image: 
     radial-gradient(circle at 0% 0%, rgba(218, 246, 230, 0.4) 0%, transparent 45%),
     linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
-  transition: var(--transition);
+  transition: background 0.3s ease, color 0.3s ease;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 :root[data-theme="dark"] body {
@@ -55,6 +77,8 @@ body {
 
 #root {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 h1,
@@ -72,11 +96,20 @@ h3 {
   color: var(--heading);
 }
 
-/* Global Animations */
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Global Animations - simplified for speed */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -87,7 +120,7 @@ h3 {
 @keyframes slideInLeft {
   from {
     opacity: 0;
-    transform: translateX(-20px);
+    transform: translateX(-15px);
   }
   to {
     opacity: 1;
@@ -98,7 +131,7 @@ h3 {
 @keyframes slideInRight {
   from {
     opacity: 0;
-    transform: translateX(20px);
+    transform: translateX(15px);
   }
   to {
     opacity: 1;
@@ -109,7 +142,7 @@ h3 {
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.95);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;
@@ -118,21 +151,17 @@ h3 {
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -1000px 0;
-  }
-  100% {
-    background-position: 1000px 0;
-  }
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .loading-skeleton {
@@ -143,8 +172,7 @@ h3 {
     var(--bg-primary) 50%,
     var(--bg-secondary) 75%
   );
-  background-size: 1000px 100%;
-  animation: shimmer 2s infinite;
+  background-size: 800px 100%;
+  animation: shimmer 1.5s infinite;
   border-radius: 8px;
 }
-

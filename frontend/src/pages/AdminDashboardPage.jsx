@@ -132,11 +132,11 @@ function AdminDashboardPage() {
             <Link to="/admin/products/new" className="button-link">Add Product</Link>
           </div>
         </div>
-        <div className="tabs" style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+        <div className="tabs" style={{ marginTop: '1rem' }}>
           <button onClick={() => setActiveTab('products')} className={activeTab === 'products' ? 'active' : ''}>Catalog</button>
           <button onClick={() => setActiveTab('orders')} className={activeTab === 'orders' ? 'active' : ''}>Orders</button>
           <button onClick={() => setActiveTab('analytics')} className={activeTab === 'analytics' ? 'active' : ''}>Analytics</button>
-          <button onClick={() => setActiveTab('logs')} className={activeTab === 'logs' ? 'active' : ''}>Activity Logs</button>
+          <button onClick={() => setActiveTab('logs')} className={activeTab === 'logs' ? 'active' : ''}>Activity</button>
         </div>
       </section>
 
@@ -272,7 +272,7 @@ function AdminDashboardPage() {
           <h2>Activity Logs</h2>
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {activityLogs.map(log => (
-              <li key={log.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid #eee' }}>
+              <li key={log.id} style={{ padding: '0.5rem 0', borderBottom: '1px solid var(--border-color)' }}>
                 <strong>{log.user}</strong>: {log.action} <span style={{ color: '#888', fontSize: '0.85em' }}>({new Date(log.time).toLocaleString()})</span>
               </li>
             ))}

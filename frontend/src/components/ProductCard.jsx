@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { toMediaUrl } from '../services/media';
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919876543210';
+const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919842123380';
 
 const formatPrice = (price) => {
   if (!price) return 'Contact for price';
