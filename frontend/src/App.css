@@ -47,7 +47,7 @@
 
 /* Brands Dropdown */
 .nav-dropdown { position: relative; }
-.nav-dropdown-trigger { display: flex; align-items: center; gap: 0.2rem; }
+.nav-dropdown-trigger { display: flex; align-items: center; gap: 0.2rem; background: transparent !important; box-shadow: none !important; color: inherit; }
 .nav-dropdown-content {
   display: none; position: absolute; top: 100%; left: 0;
   background: var(--bg-primary); min-width: 180px;
@@ -369,7 +369,7 @@ html { scroll-behavior: smooth; }
     z-index: 99;
   }
   .nav-links.open { display: flex; }
-  .nav-links a, .nav-dropdown-trigger { padding: 0.6rem 0.8rem; width: 100%; text-align: left; }
+  .nav-links a, .nav-dropdown-trigger { padding: 0.6rem 0.8rem; width: 100%; text-align: left; justify-content: flex-start; }
 
   .nav-dropdown-content {
     position: static; box-shadow: none; border: none;

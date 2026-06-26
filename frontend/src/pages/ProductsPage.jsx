@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { api } from '../services/api';
 import ProductList from '../components/catalog/ProductList';
 import ProductFilters from '../components/catalog/ProductFilters';
@@ -15,14 +15,9 @@ const CART_KEY = 'soosai:cart';
 const PER_PAGE = 9;
 
 function ProductsPage() {
-  const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [brand, setBrand] = useState('');
-  const [sortBy, setSortBy] = useState('featured');
-  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [wishlistIds, setWishlistIds] = useState([]);
   const [compareIds, setCompareIds] = useState([]);
@@ -32,6 +27,25 @@ function ProductsPage() {
   const [orderModalOpen, setOrderModalOpen] = useState(false);
   const [modalItems, setModalItems] = useState([]);
   const [brands, setBrands] = useState([]);
+
+  const search = searchParams.get('q') || '';
+  const category = searchParams.get('category') || '';
+  const brand = searchParams.get('brand') || '';
+  const sortBy = searchParams.get('sortBy') || 'featured';
+  const page = parseInt(searchParams.get('page') || '1', 10);
+
+  const updateFilters = (newFilters) => {
+    const params = new URLSearchParams(searchParams);
+    Object.keys(newFilters).forEach((key) => {
+      if (newFilters[key]) params.set(key, newFilters[key]);
+      else params.delete(key);
+    });
+    // Reset page on filter change
+    if ('q' in newFilters || 'category' in newFilters || 'brand' in newFilters || 'sortBy' in newFilters) {
+      if (!('page' in newFilters)) params.set('page', '1');
+    }
+    setSearchParams(params);
+  };
 
   const refreshLocalState = () => {
     setWishlistIds(loadJSON(WISHLIST_KEY, []));
@@ -60,16 +74,8 @@ function ProductsPage() {
     loadBrands();
   }, []);
 
-  // Sync URL parameters to local state when they change
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    setBrand(params.get('brand') || '');
-    setSearch(params.get('q') || '');
-    setCategory(params.get('category') || '');
-    setSortBy(params.get('sortBy') || 'featured');
-  }, [location.search]);
-
-  useEffect(() => {
+    let ignore = false;
     const loadProducts = async () => {
       setLoading(true);
       try {
@@ -82,18 +88,21 @@ function ProductsPage() {
         query.set('limit', PER_PAGE);
 
         const res = await api.getProducts(`?${query.toString()}`);
-        setProducts(res.data || []);
-        if (res.pagination) {
-          setTotalPages(res.pagination.pages || 1);
+        if (!ignore) {
+          setProducts(res.data || []);
+          if (res.pagination) {
+            setTotalPages(res.pagination.pages || 1);
+          }
         }
       } catch (err) {
-        setError(err.message || 'Failed to load products.');
+        if (!ignore) setError(err.message || 'Failed to load products.');
       } finally {
-        setLoading(false);
+        if (!ignore) setLoading(false);
       }
     };
 
     loadProducts();
+    return () => { ignore = true; };
   }, [search, category, brand, sortBy, page]);
 
   useEffect(() => {
@@ -105,10 +114,7 @@ function ProductsPage() {
     });
   }, []);
 
-  // Reset page when filters change
-  useEffect(() => {
-    setPage(1);
-  }, [search, category, brand, sortBy]);
+
 
   const handleToggleWishlist = (product) => {
     const next = wishlistIds.includes(product.id)
@@ -159,16 +165,11 @@ function ProductsPage() {
         <div className="toolbar">
           <h2>Products</h2>
           <ProductFilters 
-            search={search} setSearch={setSearch}
-            category={category} setCategory={setCategory} categories={categories}
-            brand={brand} setBrand={setBrand} brands={brands}
-            sortBy={sortBy} setSortBy={setSortBy}
-            onReset={() => {
-              setSearch('');
-              setCategory('');
-              setBrand('');
-              setSortBy('featured');
-            }}
+            search={search} setSearch={(q) => updateFilters({ q })}
+            category={category} setCategory={(c) => updateFilters({ category: c })} categories={categories}
+            brand={brand} setBrand={(b) => updateFilters({ brand: b })} brands={brands}
+            sortBy={sortBy} setSortBy={(s) => updateFilters({ sortBy: s })}
+            onReset={() => updateFilters({ q: '', category: '', brand: '', sortBy: 'featured', page: '1' })}
           />
         </div>
 
@@ -247,7 +248,7 @@ function ProductsPage() {
                 setOrderModalOpen(true);
               }}
             />
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            <Pagination page={page} totalPages={totalPages} onChange={(p) => updateFilters({ page: String(p) })} />
           </>
         ) : null}
 
@@ -264,7 +265,7 @@ function ProductsPage() {
                 <div key={item.id} className="compare-card">
                   <h4>{item.name}</h4>
                   <p>{item.brand || 'Generic'}</p>
-                  <p>₹{item.price}</p>
+
                 </div>
               ))}
             </div>

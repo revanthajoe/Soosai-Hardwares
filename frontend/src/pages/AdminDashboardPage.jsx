@@ -177,7 +177,7 @@ function AdminDashboardPage() {
                       </th>
                       <th>Name</th>
                       <th>Category</th>
-                      <th>Price</th>
+
                       <th>Actions</th>
                     </tr>
                   </thead>
@@ -189,7 +189,7 @@ function AdminDashboardPage() {
                         </td>
                         <td>{product.name}</td>
                         <td>{product.category?.name || '-'}</td>
-                        <td>{product.price}</td>
+
                         <td className="action-row">
                           <Link className="small-btn" to={`/admin/products/${product.id}/edit`}>Edit</Link>
                           <button type="button" className="small-btn danger" onClick={() => onDeleteProduct(product.id)}>Delete</button>

@@ -12,15 +12,7 @@ const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919842123380';
 const WISHLIST_KEY = 'soosai:wishlist';
 const CART_KEY = 'soosai:cart';
 
-const formatPrice = (price) => {
-  if (!price) return 'Contact for price';
-  if (isNaN(price)) return `₹${price}`; // e.g. "250 to 350" -> "₹250 to 350"
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 2,
-  }).format(price);
-};
+
 
 function ProductDetailPage() {
   const { id } = useParams();
@@ -148,7 +140,7 @@ function ProductDetailPage() {
             {product.nickname && <span className="nickname-badge" style={{ marginLeft: '0.5rem', verticalAlign: 'middle', fontSize: '1rem' }}>aka {product.nickname}</span>}
           </h1>
           <p className="meta">{product.brand || 'Generic'} • {product.category?.name}</p>
-          <p className="price">{formatPrice(product?.price)} / {product.unit || 'piece'}</p>
+
           <p className="description">{product.description || 'No description available.'}</p>
           <div className="rating-row">
             <span className="rating">★ {averageRating || 'New'}</span>

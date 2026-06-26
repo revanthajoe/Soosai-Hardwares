@@ -5,15 +5,7 @@ import { toMediaUrl } from '../services/media';
 
 const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919842123380';
 
-const formatPrice = (price) => {
-  if (!price) return 'Contact for price';
-  if (isNaN(price)) return `₹${price}`; // e.g. "250 to 350" -> "₹250 to 350"
-  return new Intl.NumberFormat('en-IN', {
-    style: 'currency',
-    currency: 'INR',
-    maximumFractionDigits: 2,
-  }).format(price);
-};
+
 
 function ProductCard({
   product,
@@ -33,7 +25,7 @@ function ProductCard({
 
   const message = `Hello, I want to order:%0AProduct: ${product.name}%0AQuantity: ${qty} ${
     product.unit || 'piece'
-  }%0APrice: ${formatPrice(product.price)}`;
+  }`;
   const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
 
   const variants = {
@@ -103,7 +95,7 @@ function ProductCard({
           <img className="product-image" src={toMediaUrl(product.image)} alt={product.name} />
         </motion.div>
       ) : null}
-      <p className="price">{formatPrice(product.price)}</p>
+
       <p className="description">{product.description}</p>
       <div className="qty-row">
         <label htmlFor={`qty-${productId}`}>Qty</label>

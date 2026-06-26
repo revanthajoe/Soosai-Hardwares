@@ -19,13 +19,12 @@ export default function WhatsAppOrderModal({ isOpen, onClose, items }) {
     message += `*Items:*\n`;
 
     items.forEach((item) => {
-      const price = item.price || item.product?.price || 'Contact for price';
       const qty = item.qty || 1;
       const name = item.name || item.product?.name || 'Item';
-      message += `- ${name} (x${qty}) [Approx Price: ₹${price}]\n`;
+      message += `- ${name} (x${qty})\n`;
     });
 
-    message += `\n*Please confirm exact pricing and availability.*`;
+
 
     const num = WHATSAPP_NUMBER.startsWith('91') ? WHATSAPP_NUMBER : `91${WHATSAPP_NUMBER}`;
     const whatsappUrl = `https://wa.me/${num}?text=${encodeURIComponent(message)}`;
