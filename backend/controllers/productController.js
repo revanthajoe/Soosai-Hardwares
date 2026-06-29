@@ -284,13 +284,13 @@ const getProductBySlug = asyncHandler(async (req, res) => {
  *         description: Validation error
  */
 const createProduct = asyncHandler(async (req, res) => {
-  const { name, categoryId, brand, unit, price, nickname, description, isActive, isFeatured } = req.body;
+  const { name, categoryId, brand, unit, nickname, description, isActive, isFeatured } = req.body;
 
   // Validate required fields
-  if (!name || !categoryId || !price) {
+  if (!name || !categoryId) {
     return res.status(400).json({
       success: false,
-      message: 'Missing required fields: name, categoryId, price',
+      message: 'Missing required fields: name, categoryId',
       statusCode: 400,
     });
   }
@@ -306,13 +306,16 @@ const createProduct = asyncHandler(async (req, res) => {
     });
   }
 
-  // Generate slug
+  // Generate slug & check if already exists
   const baseSlug = slugify(name);
   let slug = baseSlug;
-  let count = 1;
-  while (await Product.findOneBySlug(slug)) {
-    slug = `${baseSlug}-${count}`;
-    count++;
+  const existing = await Product.findOneBySlug(slug);
+  if (existing) {
+    return res.status(400).json({
+      success: false,
+      message: 'Product already exists',
+      statusCode: 400,
+    });
   }
 
   const image = req.cloudinaryUrl || '';
@@ -326,7 +329,6 @@ const createProduct = asyncHandler(async (req, res) => {
     category_id: parseInt(categoryId),
     brand: (brand || '').trim(),
     unit: (unit || 'piece').trim(),
-    price: String(price).trim(),
     nickname: (nickname || '').trim(),
     description: (description || '').trim(),
     image,
@@ -393,7 +395,7 @@ const createProduct = asyncHandler(async (req, res) => {
  */
 const updateProduct = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { name, categoryId, brand, unit, price, nickname, description, isActive, isFeatured } = req.body;
+  const { name, categoryId, brand, unit, nickname, description, isActive, isFeatured } = req.body;
 
   const productId = parseInt(id);
   if (isNaN(productId)) {
@@ -445,9 +447,6 @@ const updateProduct = asyncHandler(async (req, res) => {
   // Update other fields
   if (brand !== undefined) updates.brand = (brand || '').trim();
   if (unit !== undefined) updates.unit = (unit || 'piece').trim();
-  if (price !== undefined) {
-    updates.price = String(price).trim();
-  }
   if (nickname !== undefined) updates.nickname = (nickname || '').trim();
   if (description !== undefined) updates.description = (description || '').trim();
   if (isActive !== undefined) updates.is_active = isActive === 'true' || isActive === true;

@@ -35,8 +35,8 @@ function AdminDashboardPage() {
       
       // Load mock local data
       setOrders(getStorageData('orders', [
-        { id: 'ORD-001', customer: 'John Doe', amount: 150.00, status: 'Pending', date: new Date().toISOString() },
-        { id: 'ORD-002', customer: 'Jane Smith', amount: 89.99, status: 'Shipped', date: new Date().toISOString() }
+        { id: 'ORD-001', customer: 'John Doe', completed: false, date: new Date().toISOString() },
+        { id: 'ORD-002', customer: 'Jane Smith', completed: true, date: new Date().toISOString() }
       ]));
       setActivityLogs(getStorageData('activityLogs', [
         { id: 1, action: 'System Setup', user: 'Admin', time: new Date().toISOString() }
@@ -56,6 +56,12 @@ function AdminDashboardPage() {
     const newLogs = [{ id: Date.now(), action, user: 'Admin', time: new Date().toISOString() }, ...activityLogs].slice(0, 50);
     setActivityLogs(newLogs);
     setStorageData('activityLogs', newLogs);
+  };
+
+  const toggleOrderStatus = (orderId) => {
+    const updatedOrders = orders.map(o => o.id === orderId ? { ...o, completed: !o.completed } : o);
+    setOrders(updatedOrders);
+    setStorageData('orders', updatedOrders);
   };
 
   const onCreateCategory = async (event) => {
@@ -109,8 +115,8 @@ function AdminDashboardPage() {
   };
 
   const handleExportCSV = () => {
-    const headers = 'ID,Name,Price\n';
-    const csv = products.map(p => `${p.id},"${p.name}",${p.price}`).join('\n');
+    const headers = 'ID,Name,Brand,Category\n';
+    const csv = products.map(p => `${p.id},"${p.name}","${p.brand || ''}","${p.category?.name || ''}"`).join('\n');
     const blob = new Blob([headers + csv], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -209,11 +215,19 @@ function AdminDashboardPage() {
           <h2>Recent Orders</h2>
           <div className="table-wrap">
             <table className="admin-table">
-              <thead><tr><th>ID</th><th>Customer</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+              <thead><tr><th>Completed</th><th>ID</th><th>Customer</th><th>Date</th></tr></thead>
               <tbody>
                 {orders.map(o => (
-                  <tr key={o.id}>
-                    <td>{o.id}</td><td>{o.customer}</td><td>₹{Number(o.amount).toFixed(2)}</td><td>{o.status}</td><td>{new Date(o.date).toLocaleDateString()}</td>
+                  <tr key={o.id} style={{ opacity: o.completed ? 0.6 : 1 }}>
+                    <td>
+                      <input 
+                        type="checkbox" 
+                        checked={o.completed} 
+                        onChange={() => toggleOrderStatus(o.id)} 
+                        style={{ transform: 'scale(1.3)', cursor: 'pointer', accentColor: 'var(--accent)' }}
+                      />
+                    </td>
+                    <td>{o.id}</td><td>{o.customer}</td><td>{new Date(o.date).toLocaleDateString()}</td>
                   </tr>
                 ))}
               </tbody>

@@ -22,6 +22,7 @@ function ProductFormPage() {
   const [categories, setCategories] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [file, setFile] = useState(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -55,6 +56,24 @@ function ProductFormPage() {
 
   const updateField = (key, value) => {
     setForm((current) => ({ ...current, [key]: value }));
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      setFile(e.dataTransfer.files[0]);
+    }
   };
 
   const handleSubmit = async (event) => {
@@ -147,14 +166,42 @@ function ProductFormPage() {
             onChange={(e) => updateField('description', e.target.value)}
           />
 
-          <label htmlFor="image">Capture / Upload Image</label>
-          <input
-            id="image"
-            type="file"
-            accept="image/*"
-            capture="environment"
-            onChange={(e) => setFile(e.target.files?.[0] || null)}
-          />
+          <label>Capture / Upload Image</label>
+          <div 
+            className={`drop-zone ${isDragging ? 'dragging' : ''}`}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => document.getElementById('image').click()}
+            style={{
+              border: `2px dashed ${isDragging ? 'var(--accent)' : 'var(--border-color)'}`,
+              borderRadius: '12px',
+              padding: '2rem 1rem',
+              textAlign: 'center',
+              backgroundColor: isDragging ? 'var(--accent-light)' : 'var(--bg-secondary)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {file ? (
+              <div style={{ color: 'var(--accent)', fontWeight: '600' }}>
+                📁 {file.name}
+              </div>
+            ) : (
+              <div style={{ color: 'var(--text)', opacity: 0.7 }}>
+                <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📸</div>
+                Drag & drop an image here, or click to browse
+              </div>
+            )}
+            <input
+              id="image"
+              type="file"
+              accept="image/*"
+              capture="environment"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              style={{ display: 'none' }}
+            />
+          </div>
 
           <label className="check-row" htmlFor="featured">
             <input

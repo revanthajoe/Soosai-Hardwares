@@ -7,18 +7,12 @@ const multer = require('multer');
 const { uploadToCloudinary } = require('../config/cloudinary');
 
 const maxFileSize = Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024);
-const allowedTypes = (process.env.ALLOWED_FILE_TYPES || 'jpg,jpeg,png,webp')
-  .split(',')
-  .map((type) => type.trim().toLowerCase())
-  .filter(Boolean)
-  .map((type) => `image/${type}`);
 
-// Use memory storage - files are kept in buffer, not written to disk
 const storage = multer.memoryStorage();
 
 const fileFilter = (req, file, cb) => {
-  if (!allowedTypes.includes(file.mimetype)) {
-    return cb(new Error('Only JPEG, PNG, and WEBP images are allowed.'));
+  if (!file.mimetype.startsWith('image/')) {
+    return cb(new Error('Only image files are allowed.'));
   }
 
   return cb(null, true);

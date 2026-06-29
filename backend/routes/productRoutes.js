@@ -45,7 +45,7 @@ router.post(
   uploadToCloud,
   body('name').trim().notEmpty().withMessage('Product name is required.'),
   body('categoryId').isInt({ min: 1 }).withMessage('Valid category is required.'),
-  body('price').trim().notEmpty().withMessage('Price range is required.'),
+
   validateRequest,
   createProduct
 );
@@ -59,7 +59,7 @@ router.put(
   uploadToCloud,
   body('name').optional().trim().notEmpty().withMessage('Product name is required.'),
   body('categoryId').optional().isInt({ min: 1 }).withMessage('Valid category is required.'),
-  body('price').optional().trim().notEmpty().withMessage('Price range cannot be empty.'),
+
   validateRequest,
   updateProduct
 );
