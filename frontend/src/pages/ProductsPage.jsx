@@ -163,7 +163,7 @@ function ProductsPage() {
     <div className="container page-gap">
       <section className="panel">
         <div className="toolbar">
-          <h2>Products</h2>
+          <h1>Products</h1>
           <ProductFilters 
             search={search} setSearch={(q) => updateFilters({ q })}
             category={category} setCategory={(c) => updateFilters({ category: c })} categories={categories}
