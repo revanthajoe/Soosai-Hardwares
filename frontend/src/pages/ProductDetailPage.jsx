@@ -49,6 +49,32 @@ function ProductDetailPage() {
     void load();
   }, [id]);
 
+  // Dynamic SEO metadata
+  useEffect(() => {
+    if (!product) return;
+
+    const originalTitle = document.title;
+    document.title = `${product.name} | Soosai Hardwares`;
+
+    // Update or create meta description
+    let metaDesc = document.querySelector('meta[name="description"]');
+    const originalDesc = metaDesc ? metaDesc.getAttribute('content') : '';
+    if (!metaDesc) {
+      metaDesc = document.createElement('meta');
+      metaDesc.setAttribute('name', 'description');
+      document.head.appendChild(metaDesc);
+    }
+    const descText = product.description
+      ? `${product.name} — ${product.description.substring(0, 140)}. View details and order via WhatsApp at Soosai Hardwares.`
+      : `${product.name} from Soosai Hardwares. View product details and contact us on WhatsApp for availability and ordering.`;
+    metaDesc.setAttribute('content', descText);
+
+    return () => {
+      document.title = originalTitle;
+      if (metaDesc) metaDesc.setAttribute('content', originalDesc);
+    };
+  }, [product]);
+
   useEffect(() => {
     setWishlistIds(loadJSON(WISHLIST_KEY, []));
     setCartItems(loadJSON(CART_KEY, []));

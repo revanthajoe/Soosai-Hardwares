@@ -1,6 +1,7 @@
 const { Category, Product } = require('../models');
 const asyncHandler = require('../utils/asyncHandler');
 const slugify = require('../utils/slugify');
+const { invalidateSitemapCache } = require('./sitemapController');
 
 const getCategories = asyncHandler(async (req, res) => {
   const categories = await Category.findAll('name', 'asc');
@@ -22,6 +23,8 @@ const createCategory = asyncHandler(async (req, res) => {
   }
 
   const category = await Category.create({ name, slug });
+
+  invalidateSitemapCache(); // Refresh sitemap when categories change
 
   res.status(201).json({
     success: true,
@@ -45,6 +48,8 @@ const deleteCategory = asyncHandler(async (req, res) => {
   }
 
   await Category.delete(id);
+
+  invalidateSitemapCache(); // Refresh sitemap when categories change
 
   res.status(200).json({
     success: true,

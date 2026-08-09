@@ -8,6 +8,7 @@ const { logger } = require('../config/logger');
 const { deleteFromCloudinary, getPublicIdFromUrl } = require('../config/cloudinary');
 const asyncHandler = require('../utils/asyncHandler');
 const slugify = require('../utils/slugify');
+const { invalidateSitemapCache } = require('./sitemapController');
 
 // Simple in-memory cache to reduce database queries
 const cache = new Map();
@@ -321,6 +322,7 @@ const createProduct = asyncHandler(async (req, res) => {
   const image = req.cloudinaryUrl || '';
 
   cache.clear(); // Clear cache when new product is created
+  invalidateSitemapCache(); // Refresh sitemap
 
   // Create product
   const product = await Product.create({
@@ -468,6 +470,7 @@ const updateProduct = asyncHandler(async (req, res) => {
   }
 
   cache.clear(); // Clear cache when product is updated
+  invalidateSitemapCache(); // Refresh sitemap
 
   const updatedProduct = await Product.update(productId, updates);
 
@@ -534,6 +537,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 
   cache.clear(); // Clear cache when product is deleted
+  invalidateSitemapCache(); // Refresh sitemap
 
   await Product.delete(productId);
 

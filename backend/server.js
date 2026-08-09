@@ -18,6 +18,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const productRoutes = require('./routes/productRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
+const sitemapRoutes = require('./routes/sitemapRoutes');
 
 // Utilities
 const ensureDefaultAdmin = require('./utils/ensureDefaultAdmin');
@@ -74,6 +75,9 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime(),
   });
 });
+
+// ========== SITEMAP (before rate limiting — search engines must access freely) ==========
+app.use('/api/sitemap', sitemapRoutes);
 
 // ========== API ROUTES ==========
 // Apply rate limiting to all API routes
