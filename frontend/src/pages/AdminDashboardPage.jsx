@@ -207,7 +207,8 @@ function AdminDashboardPage() {
           <section className="grid two">
             <form className="panel" onSubmit={onCreateCategory}>
               <h2>Add Category</h2>
-              <input value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="Paint, Cement, Pipes" required />
+              <label htmlFor="newCategory">Category Name</label>
+              <input id="newCategory" value={newCategory} onChange={e => setNewCategory(e.target.value)} placeholder="Paint, Cement, Pipes" required />
               <button type="submit">Save Category</button>
             </form>
             <section className="panel">

@@ -92,7 +92,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
-app.use('/api/ads', adRoutes);
+app.use('/api/promotions', adRoutes);
 
 // ========== ERROR HANDLING ==========
 app.use(notFound);

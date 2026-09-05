@@ -125,22 +125,22 @@ export const api = {
   incrementOrder: () => request('/analytics/order', { method: 'POST' }),
 
   getAds: async () => {
-    if (cache.has('/ads')) return cache.get('/ads');
-    const res = await request('/ads');
-    cache.set('/ads', res);
-    setTimeout(() => cache.delete('/ads'), 60000); // 1 minute cache
+    if (cache.has('/promotions')) return cache.get('/promotions');
+    const res = await request('/promotions');
+    cache.set('/promotions', res);
+    setTimeout(() => cache.delete('/promotions'), 60000); // 1 minute cache
     return res;
   },
-  getAdminAds: () => request('/ads/admin'),
+  getAdminAds: () => request('/promotions/admin'),
   createAd: (formData) =>
-    request('/ads', { method: 'POST', body: formData }).finally(() => cache.delete('/ads')),
+    request('/promotions', { method: 'POST', body: formData }).finally(() => cache.delete('/promotions')),
   updateAd: (id, formData) =>
-    request(`/ads/${id}`, { method: 'PUT', body: formData }).finally(() => cache.delete('/ads')),
+    request(`/promotions/${id}`, { method: 'PUT', body: formData }).finally(() => cache.delete('/promotions')),
   reorderAd: (id, direction) =>
-    request(`/ads/${id}/reorder`, {
+    request(`/promotions/${id}/reorder`, {
       method: 'PATCH',
       body: JSON.stringify({ direction }),
-    }).finally(() => cache.delete('/ads')),
+    }).finally(() => cache.delete('/promotions')),
   deleteAd: (id) =>
-    request(`/ads/${id}`, { method: 'DELETE' }).finally(() => cache.delete('/ads')),
+    request(`/promotions/${id}`, { method: 'DELETE' }).finally(() => cache.delete('/promotions')),
 };

@@ -31,7 +31,7 @@ const resourceTypeForMediaType = (mediaType) => (mediaType === 'video' ? 'video'
 
 /**
  * @swagger
- * /api/ads:
+ * /api/promotions:
  *   get:
  *     summary: Get active advertisements (public, ordered for the homepage carousel)
  *     tags: [Advertisements]
@@ -54,7 +54,7 @@ const getAds = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
- * /api/ads/admin:
+ * /api/promotions/admin:
  *   get:
  *     summary: Get all advertisements including inactive ones (admin only)
  *     tags: [Advertisements]
@@ -71,7 +71,7 @@ const getAdminAds = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
- * /api/ads:
+ * /api/promotions:
  *   post:
  *     summary: Create advertisement
  *     tags: [Advertisements]
@@ -144,7 +144,7 @@ const createAd = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
- * /api/ads/{id}:
+ * /api/promotions/{id}:
  *   put:
  *     summary: Update advertisement
  *     tags: [Advertisements]
@@ -238,7 +238,7 @@ const updateAd = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
- * /api/ads/{id}:
+ * /api/promotions/{id}:
  *   delete:
  *     summary: Delete advertisement
  *     tags: [Advertisements]
@@ -302,7 +302,7 @@ const deleteAd = asyncHandler(async (req, res) => {
 
 /**
  * @swagger
- * /api/ads/{id}/reorder:
+ * /api/promotions/{id}/reorder:
  *   patch:
  *     summary: Move an advertisement up or down in display order
  *     tags: [Advertisements]
