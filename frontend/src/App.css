@@ -96,6 +96,30 @@
   position: relative; z-index: 1;
 }
 
+/* Advertisements */
+.ads-section { margin-bottom: 1.5rem; }
+.ads-carousel {
+  position: relative; width: 100%; aspect-ratio: 21 / 6;
+  border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);
+  border: 1px solid var(--border-color); background: var(--bg-secondary);
+}
+.ads-carousel a { display: block; width: 100%; height: 100%; }
+.ads-carousel-slide { width: 100%; height: 100%; }
+.ads-carousel-slide img, .ads-carousel-slide video {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
+.ads-dots {
+  display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.75rem;
+}
+.ads-dot {
+  width: 8px; height: 8px; border-radius: 50%; padding: 0; border: none;
+  background: var(--border-color); cursor: pointer; transition: var(--transition);
+}
+.ads-dot.active { background: var(--accent); width: 20px; border-radius: 4px; }
+@media (max-width: 640px) {
+  .ads-carousel { aspect-ratio: 4 / 3; }
+}
+
 /* Panel & Cards */
 .panel {
   background: var(--bg-primary); border: 1px solid var(--border-color);

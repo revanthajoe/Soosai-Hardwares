@@ -11,6 +11,7 @@ import ProductDetailPage from './pages/ProductDetailPage';
 import AdminLoginPage from './pages/AdminLoginPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
 import ProductFormPage from './pages/ProductFormPage';
+import AdFormPage from './pages/AdFormPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AnalyticsTracker from './components/AnalyticsTracker';
 import './App.css';
@@ -32,6 +33,8 @@ function App() {
                 <Route path="/admin/dashboard" element={<ProtectedRoute><AdminDashboardPage /></ProtectedRoute>} />
                 <Route path="/admin/products/new" element={<ProtectedRoute><ProductFormPage /></ProtectedRoute>} />
                 <Route path="/admin/products/:id/edit" element={<ProtectedRoute><ProductFormPage /></ProtectedRoute>} />
+                <Route path="/admin/ads/new" element={<ProtectedRoute><AdFormPage /></ProtectedRoute>} />
+                <Route path="/admin/ads/:id/edit" element={<ProtectedRoute><AdFormPage /></ProtectedRoute>} />
                 <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>

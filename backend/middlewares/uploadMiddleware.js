@@ -7,6 +7,9 @@ const multer = require('multer');
 const { uploadToCloudinary } = require('../config/cloudinary');
 
 const maxFileSize = Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024);
+const maxVideoFileSize = Number(process.env.MAX_VIDEO_FILE_SIZE || 25 * 1024 * 1024);
+
+const VIDEO_TYPES = ['video/mp4', 'video/webm'];
 
 const storage = multer.memoryStorage();
 
@@ -18,12 +21,28 @@ const fileFilter = (req, file, cb) => {
   return cb(null, true);
 };
 
+const adFileFilter = (req, file, cb) => {
+  if (!file.mimetype.startsWith('image/') && !VIDEO_TYPES.includes(file.mimetype)) {
+    return cb(new Error('Only image, GIF, or MP4/WebM video files are allowed.'));
+  }
+
+  return cb(null, true);
+};
+
 const upload = multer({
   storage,
   limits: {
     fileSize: maxFileSize,
   },
   fileFilter,
+});
+
+const uploadAdMedia = multer({
+  storage,
+  limits: {
+    fileSize: maxVideoFileSize,
+  },
+  fileFilter: adFileFilter,
 });
 
 /**
@@ -50,5 +69,31 @@ const uploadToCloud = async (req, res, next) => {
   }
 };
 
+/**
+ * Same as uploadToCloud, but for ad media (image/gif/video) using
+ * resource_type: 'auto' so Cloudinary handles video/gif correctly.
+ */
+const uploadAdToCloud = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return next();
+    }
+
+    const result = await uploadToCloudinary(req.file.buffer, {
+      folder: 'soosai-hardwares/ads',
+      resource_type: 'auto',
+    });
+
+    req.cloudinaryUrl = result.secure_url;
+    req.cloudinaryPublicId = result.public_id;
+
+    next();
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = upload;
 module.exports.uploadToCloud = uploadToCloud;
+module.exports.uploadAdMedia = uploadAdMedia;
+module.exports.uploadAdToCloud = uploadAdToCloud;

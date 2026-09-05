@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import Alert from '../components/common/Alert';
 import Loader from '../components/common/Loader';
 import { getStorageData, setStorageData } from '../utils/storage';
+import { toMediaUrl } from '../services/media';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 function AdminDashboardPage() {
@@ -12,40 +13,59 @@ function AdminDashboardPage() {
   const [newCategory, setNewCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  
+  const [analyticsError, setAnalyticsError] = useState('');
+  const [adsError, setAdsError] = useState('');
+
   const [activeTab, setActiveTab] = useState('products');
   const [selectedProducts, setSelectedProducts] = useState([]);
   const [orders, setOrders] = useState([]);
   const [activityLogs, setActivityLogs] = useState([]);
   const [analytics, setAnalytics] = useState({ visits: 0, whatsapp_orders: 0 });
+  const [ads, setAds] = useState([]);
 
   const load = async () => {
     setLoading(true);
     setError('');
+    setAnalyticsError('');
+    setAdsError('');
 
-    try {
-      const [productRes, categoryRes, analyticsRes] = await Promise.all([
-        api.getProducts(), 
-        api.getCategories(),
-        api.getAnalytics()
-      ]);
-      setProducts(productRes.data || []);
-      setCategories(categoryRes.data || []);
-      setAnalytics(analyticsRes.data || { visits: 0, whatsapp_orders: 0 });
-      
-      // Load mock local data
-      setOrders(getStorageData('orders', [
-        { id: 'ORD-001', customer: 'John Doe', completed: false, date: new Date().toISOString() },
-        { id: 'ORD-002', customer: 'Jane Smith', completed: true, date: new Date().toISOString() }
-      ]));
-      setActivityLogs(getStorageData('activityLogs', [
-        { id: 1, action: 'System Setup', user: 'Admin', time: new Date().toISOString() }
-      ]));
-    } catch (err) {
-      setError(err.message || 'Failed to load admin data.');
-    } finally {
-      setLoading(false);
+    const [productResult, categoryResult, analyticsResult, adsResult] = await Promise.allSettled([
+      api.getProducts(),
+      api.getCategories(),
+      api.getAnalytics(),
+      api.getAdminAds(),
+    ]);
+
+    if (productResult.status === 'fulfilled' && categoryResult.status === 'fulfilled') {
+      setProducts(productResult.value.data || []);
+      setCategories(categoryResult.value.data || []);
+    } else {
+      const failed = productResult.status === 'rejected' ? productResult.reason : categoryResult.reason;
+      setError(failed?.message || 'Failed to load admin data.');
     }
+
+    if (analyticsResult.status === 'fulfilled') {
+      setAnalytics(analyticsResult.value.data || { visits: 0, whatsapp_orders: 0 });
+    } else {
+      setAnalyticsError(analyticsResult.reason?.message || 'Failed to load analytics.');
+    }
+
+    if (adsResult.status === 'fulfilled') {
+      setAds(adsResult.value.data || []);
+    } else {
+      setAdsError(adsResult.reason?.message || 'Failed to load advertisements.');
+    }
+
+    // Load mock local data
+    setOrders(getStorageData('orders', [
+      { id: 'ORD-001', customer: 'John Doe', completed: false, date: new Date().toISOString() },
+      { id: 'ORD-002', customer: 'Jane Smith', completed: true, date: new Date().toISOString() }
+    ]));
+    setActivityLogs(getStorageData('activityLogs', [
+      { id: 1, action: 'System Setup', user: 'Admin', time: new Date().toISOString() }
+    ]));
+
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -114,6 +134,40 @@ function AdminDashboardPage() {
     }
   };
 
+  const onToggleAdActive = async (ad) => {
+    try {
+      const formData = new FormData();
+      formData.append('isActive', !ad.isActive);
+      await api.updateAd(ad.id, formData);
+      addLog(`${ad.isActive ? 'Deactivated' : 'Activated'} advertisement: ${ad.title || ad.id}`);
+      setAds((current) => current.map((item) => (item.id === ad.id ? { ...item, isActive: !ad.isActive } : item)));
+    } catch (err) {
+      setAdsError(err.message || 'Advertisement update failed.');
+    }
+  };
+
+  const onReorderAd = async (id, direction) => {
+    try {
+      const res = await api.reorderAd(id, direction);
+      setAds(res.data || []);
+    } catch (err) {
+      setAdsError(err.message || 'Advertisement reorder failed.');
+    }
+  };
+
+  const onDeleteAd = async (id) => {
+    const ok = window.confirm('Delete this advertisement?');
+    if (!ok) return;
+
+    try {
+      await api.deleteAd(id);
+      addLog('Deleted advertisement');
+      setAds((current) => current.filter((item) => item.id !== id));
+    } catch (err) {
+      setAdsError(err.message || 'Advertisement delete failed.');
+    }
+  };
+
   const handleExportCSV = () => {
     const headers = 'ID,Name,Brand,Category\n';
     const csv = products.map(p => `${p.id},"${p.name}","${p.brand || ''}","${p.category?.name || ''}"`).join('\n');
@@ -136,12 +190,14 @@ function AdminDashboardPage() {
           <div style={{ display: 'flex', gap: '1rem' }}>
             <button onClick={handleExportCSV}>Export CSV</button>
             <Link to="/admin/products/new" className="button-link">Add Product</Link>
+            <Link to="/admin/ads/new" className="button-link">Add Ad</Link>
           </div>
         </div>
         <div className="tabs" style={{ marginTop: '1rem' }}>
           <button onClick={() => setActiveTab('products')} className={activeTab === 'products' ? 'active' : ''}>Catalog</button>
           <button onClick={() => setActiveTab('orders')} className={activeTab === 'orders' ? 'active' : ''}>Orders</button>
           <button onClick={() => setActiveTab('analytics')} className={activeTab === 'analytics' ? 'active' : ''}>Analytics</button>
+          <button onClick={() => setActiveTab('ads')} className={activeTab === 'ads' ? 'active' : ''}>Ads</button>
           <button onClick={() => setActiveTab('logs')} className={activeTab === 'logs' ? 'active' : ''}>Activity</button>
         </div>
       </section>
@@ -156,11 +212,15 @@ function AdminDashboardPage() {
             </form>
             <section className="panel">
               <h2>Categories</h2>
-              <div className="chip-wrap">
-                {categories.map((category) => (
-                  <span className="chip" key={category.id}>{category.name}</span>
-                ))}
-              </div>
+              {loading ? <Loader text="Loading categories..." /> : null}
+              {error ? <Alert type="error">{error}</Alert> : null}
+              {!loading && !error ? (
+                <div className="chip-wrap">
+                  {categories.map((category) => (
+                    <span className="chip" key={category.id}>{category.name}</span>
+                  ))}
+                </div>
+              ) : null}
             </section>
           </section>
 
@@ -238,6 +298,7 @@ function AdminDashboardPage() {
 
       {activeTab === 'analytics' && (
         <>
+          {analyticsError ? <Alert type="error">{analyticsError}</Alert> : null}
           <section className="panel grid two" style={{ marginBottom: '2rem' }}>
             <div className="panel" style={{ border: '1px solid var(--border)' }}>
               <h3>Website Visitors</h3>
@@ -279,6 +340,55 @@ function AdminDashboardPage() {
             </div>
           </section>
         </>
+      )}
+
+      {activeTab === 'ads' && (
+        <section className="panel">
+          <h2>Advertisements</h2>
+          {adsError ? <Alert type="error">{adsError}</Alert> : null}
+          {!adsError ? (
+            <div className="table-wrap">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Preview</th>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Active</th>
+                    <th>Order</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {ads.map((ad, index) => (
+                    <tr key={ad.id}>
+                      <td>
+                        {ad.mediaType === 'video' ? (
+                          <video src={toMediaUrl(ad.mediaUrl)} muted style={{ width: 80, height: 50, objectFit: 'cover', borderRadius: 6 }} />
+                        ) : (
+                          <img src={toMediaUrl(ad.mediaUrl)} alt={ad.title || 'Ad'} style={{ width: 80, height: 50, objectFit: 'cover', borderRadius: 6 }} />
+                        )}
+                      </td>
+                      <td>{ad.title || '-'}</td>
+                      <td>{ad.mediaType}</td>
+                      <td>
+                        <input type="checkbox" checked={ad.isActive} onChange={() => onToggleAdActive(ad)} />
+                      </td>
+                      <td className="action-row">
+                        <button type="button" className="small-btn" disabled={index === 0} onClick={() => onReorderAd(ad.id, 'up')}>↑</button>
+                        <button type="button" className="small-btn" disabled={index === ads.length - 1} onClick={() => onReorderAd(ad.id, 'down')}>↓</button>
+                      </td>
+                      <td className="action-row">
+                        <Link className="small-btn" to={`/admin/ads/${ad.id}/edit`}>Edit</Link>
+                        <button type="button" className="small-btn danger" onClick={() => onDeleteAd(ad.id)}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : null}
+        </section>
       )}
 
       {activeTab === 'logs' && (

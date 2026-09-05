@@ -16,7 +16,7 @@ const { supabase } = require('../config/db');
  */
 const initSchema = async () => {
   // Verify key tables are accessible
-  const tables = ['users', 'categories', 'products', 'reviews', 'analytics'];
+  const tables = ['users', 'categories', 'products', 'reviews', 'analytics', 'advertisements'];
   for (const table of tables) {
     const { error } = await supabase.from(table).select('id').limit(1);
     if (error) {
@@ -427,6 +427,90 @@ const Analytics = {
   }
 };
 
+// ============================================================
+// Advertisement Model
+// ============================================================
+const Advertisement = {
+  async findAll({ activeOnly = false } = {}) {
+    let query = supabase
+      .from('advertisements')
+      .select('*')
+      .order('display_order', { ascending: true });
+    if (activeOnly) {
+      query = query.eq('is_active', true);
+    }
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data || []).map(Advertisement._reshape);
+  },
+
+  async findById(id) {
+    const { data, error } = await supabase
+      .from('advertisements')
+      .select('*')
+      .eq('id', id)
+      .single();
+    if (error && error.code !== 'PGRST116') throw error;
+    return data ? Advertisement._reshape(data) : null;
+  },
+
+  async create(row) {
+    const { data, error } = await supabase
+      .from('advertisements')
+      .insert(row)
+      .select()
+      .single();
+    if (error) throw error;
+    return Advertisement._reshape(data);
+  },
+
+  async update(id, updates) {
+    updates.updated_at = new Date().toISOString();
+    const { data, error } = await supabase
+      .from('advertisements')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single();
+    if (error) throw error;
+    return Advertisement._reshape(data);
+  },
+
+  async delete(id) {
+    const { error } = await supabase
+      .from('advertisements')
+      .delete()
+      .eq('id', id);
+    if (error) throw error;
+    return true;
+  },
+
+  async getMaxDisplayOrder() {
+    const { data, error } = await supabase
+      .from('advertisements')
+      .select('display_order')
+      .order('display_order', { ascending: false })
+      .limit(1);
+    if (error) throw error;
+    return data && data.length > 0 ? data[0].display_order : -1;
+  },
+
+  _reshape(row) {
+    if (!row) return null;
+    return {
+      id: row.id,
+      title: row.title,
+      mediaUrl: row.media_url,
+      mediaType: row.media_type,
+      linkUrl: row.link_url,
+      displayOrder: row.display_order,
+      isActive: row.is_active,
+      createdAt: row.created_at,
+      updatedAt: row.updated_at,
+    };
+  },
+};
+
 module.exports = {
   supabase,
   initSchema,
@@ -435,4 +519,5 @@ module.exports = {
   User,
   Review,
   Analytics,
+  Advertisement,
 };

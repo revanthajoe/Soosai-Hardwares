@@ -19,14 +19,19 @@ cloudinary.config({
  */
 const uploadToCloudinary = (fileBuffer, options = {}) => {
   return new Promise((resolve, reject) => {
+    const resourceType = options.resource_type || 'image';
     const uploadOptions = {
       folder: options.folder || 'soosai-hardwares/products',
-      resource_type: 'image',
-      transformation: [
-        { width: 800, height: 800, crop: 'limit' },
-        { quality: 'auto:good' },
-        { fetch_format: 'auto' },
-      ],
+      resource_type: resourceType,
+      ...(resourceType === 'image'
+        ? {
+            transformation: [
+              { width: 800, height: 800, crop: 'limit' },
+              { quality: 'auto:good' },
+              { fetch_format: 'auto' },
+            ],
+          }
+        : {}),
       ...options,
     };
 
@@ -50,9 +55,9 @@ const uploadToCloudinary = (fileBuffer, options = {}) => {
  * @param {string} publicId - The public ID of the image
  * @returns {Promise<object>} Cloudinary deletion result
  */
-const deleteFromCloudinary = async (publicId) => {
+const deleteFromCloudinary = async (publicId, resourceType = 'image') => {
   if (!publicId) return null;
-  return cloudinary.uploader.destroy(publicId);
+  return cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
 };
 
 /**

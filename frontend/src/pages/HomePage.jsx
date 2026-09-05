@@ -5,6 +5,7 @@ import ProductList from '../components/catalog/ProductList';
 import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
 import ReviewsSection from '../components/ReviewsSection';
+import AdsSection from '../components/AdsSection';
 
 function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -43,6 +44,8 @@ function HomePage() {
           </Link>
         </div>
       </section>
+
+      <AdsSection />
 
       <section className="panel">
         <div className="toolbar">

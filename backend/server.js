@@ -19,6 +19,7 @@ const productRoutes = require('./routes/productRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const analyticsRoutes = require('./routes/analyticsRoutes');
 const sitemapRoutes = require('./routes/sitemapRoutes');
+const adRoutes = require('./routes/adRoutes');
 
 // Utilities
 const ensureDefaultAdmin = require('./utils/ensureDefaultAdmin');
@@ -91,6 +92,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/analytics', analyticsRoutes);
+app.use('/api/ads', adRoutes);
 
 // ========== ERROR HANDLING ==========
 app.use(notFound);

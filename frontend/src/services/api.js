@@ -35,6 +35,13 @@ const request = async (path, options = {}) => {
   const payload = await parseJSON(response);
 
   if (!response.ok) {
+    if (response.status === 401 && path !== '/auth/login') {
+      auth.clearSession();
+      if (typeof window !== 'undefined' && window.location.pathname !== '/admin/login') {
+        window.location.href = '/admin/login';
+      }
+    }
+
     const message = payload?.message || `Request failed with status ${response.status}`;
     const error = new Error(message);
     error.status = response.status;
@@ -116,4 +123,24 @@ export const api = {
   getAnalytics: () => request('/analytics'),
   incrementVisit: () => request('/analytics/visit', { method: 'POST' }),
   incrementOrder: () => request('/analytics/order', { method: 'POST' }),
+
+  getAds: async () => {
+    if (cache.has('/ads')) return cache.get('/ads');
+    const res = await request('/ads');
+    cache.set('/ads', res);
+    setTimeout(() => cache.delete('/ads'), 60000); // 1 minute cache
+    return res;
+  },
+  getAdminAds: () => request('/ads/admin'),
+  createAd: (formData) =>
+    request('/ads', { method: 'POST', body: formData }).finally(() => cache.delete('/ads')),
+  updateAd: (id, formData) =>
+    request(`/ads/${id}`, { method: 'PUT', body: formData }).finally(() => cache.delete('/ads')),
+  reorderAd: (id, direction) =>
+    request(`/ads/${id}/reorder`, {
+      method: 'PATCH',
+      body: JSON.stringify({ direction }),
+    }).finally(() => cache.delete('/ads')),
+  deleteAd: (id) =>
+    request(`/ads/${id}`, { method: 'DELETE' }).finally(() => cache.delete('/ads')),
 };
