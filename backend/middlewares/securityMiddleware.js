@@ -4,13 +4,41 @@
  */
 
 const helmet = require('helmet');
-const cors = require('cors');
+
+// Origins permitted to call this API with credentials.
+// CORS_ORIGIN accepts a comma-separated list; CLIENT_URL is the primary
+// deployed frontend. Localhost dev servers are always allowed.
+const allowedOrigins = [
+  ...(process.env.CORS_ORIGIN || '').split(','),
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:4173',
+]
+  .map((value) => (value || '').trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
+// Vercel gives every preview deployment of this project its own subdomain,
+// so match them by pattern instead of enumerating them.
+const VERCEL_PREVIEW = /^https:\/\/soosai-hardwares[a-z0-9-]*\.vercel\.app$/;
 
 // CORS configuration
 const corsOptions = {
   origin: (origin, callback) => {
-    // Allow all origins to prevent CORS 500 errors during development
-    callback(null, true);
+    // Same-origin/non-browser requests (curl, health checks, server-to-server)
+    // send no Origin header and are not subject to CORS.
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    const normalized = origin.replace(/\/$/, '');
+
+    if (allowedOrigins.includes(normalized) || VERCEL_PREVIEW.test(normalized)) {
+      return callback(null, true);
+    }
+
+    // Reject by withholding the CORS headers rather than throwing, so a
+    // disallowed origin gets a clean browser-side block instead of a 500.
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

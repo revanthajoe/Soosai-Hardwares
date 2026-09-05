@@ -37,16 +37,18 @@ router.get(
   getProductById
 );
 
+// multer must run before the body validators (it is what parses multipart
+// fields into req.body), but the Cloudinary upload is deferred until after
+// validation so an invalid submission never orphans an uploaded asset.
 router.post(
   '/',
   protect,
   uploadLimiter,
   upload.single('image'),
-  uploadToCloud,
   body('name').trim().notEmpty().withMessage('Product name is required.'),
   body('categoryId').isInt({ min: 1 }).withMessage('Valid category is required.'),
-
   validateRequest,
+  uploadToCloud,
   createProduct
 );
 
@@ -56,11 +58,10 @@ router.put(
   param('id').isInt({ min: 1 }).withMessage('Invalid product id.'),
   uploadLimiter,
   upload.single('image'),
-  uploadToCloud,
   body('name').optional().trim().notEmpty().withMessage('Product name is required.'),
   body('categoryId').optional().isInt({ min: 1 }).withMessage('Valid category is required.'),
-
   validateRequest,
+  uploadToCloud,
   updateProduct
 );
 

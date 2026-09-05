@@ -118,7 +118,13 @@ const Product = {
     }
 
     if (q) {
-      query = query.or(`name.ilike.%${q}%,nickname.ilike.%${q}%`);
+      // PostgREST parses `or=(...)` as a comma-separated list, so commas,
+      // parentheses and wildcards in the raw term would corrupt the filter
+      // expression. Strip them before interpolating.
+      const safeQ = String(q).replace(/[,()%*\\]/g, ' ').trim();
+      if (safeQ) {
+        query = query.or(`name.ilike.%${safeQ}%,nickname.ilike.%${safeQ}%`);
+      }
     }
 
     const offset = (page - 1) * limit;
@@ -268,6 +274,7 @@ const Product = {
       categoryId: row.category_id,
       brand: row.brand,
       unit: row.unit,
+      nickname: row.nickname,
       price: row.price,
       stock: row.stock,
       description: row.description,
@@ -407,7 +414,18 @@ const Analytics = {
   },
 
   async increment(id) {
-    // Fetch current value, increment, and update via Supabase client
+    // Preferred path: a single atomic UPDATE ... SET value = value + 1 inside
+    // Postgres, so concurrent visits cannot overwrite each other's counts.
+    const { data: rpcValue, error: rpcError } = await supabase.rpc('increment_analytics', {
+      counter_id: id,
+    });
+
+    if (!rpcError) {
+      return rpcValue;
+    }
+
+    // Fallback for databases where 20260906000001 has not been applied yet.
+    // This read-then-write races and can lose concurrent increments.
     const { data: current, error: fetchErr } = await supabase
       .from('analytics')
       .select('value')

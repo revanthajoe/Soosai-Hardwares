@@ -6,11 +6,16 @@ import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
 import ReviewsSection from '../components/ReviewsSection';
 import AdsSection from '../components/AdsSection';
+import WhatsAppOrderModal from '../components/WhatsAppOrderModal';
+import { useShoppingLists } from '../hooks/useShoppingLists';
 
 function HomePage() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [orderModalOpen, setOrderModalOpen] = useState(false);
+  const [modalItems, setModalItems] = useState([]);
+  const { wishlistIds, compareIds, toggleWishlist, toggleCompare, addToCart } = useShoppingLists();
 
   useEffect(() => {
     const load = async () => {
@@ -54,7 +59,21 @@ function HomePage() {
 
         {loading ? <Loader text="Loading featured products..." /> : null}
         {error ? <Alert type="error">{error}</Alert> : null}
-        {!loading && !error ? <ProductList products={featuredProducts} /> : null}
+        {!loading && !error ? (
+          <ProductList
+            products={featuredProducts}
+            wishlistIds={wishlistIds}
+            compareIds={compareIds}
+            canCompare={compareIds.length < 3}
+            onToggleWishlist={toggleWishlist}
+            onToggleCompare={toggleCompare}
+            onAddToCart={addToCart}
+            onOrderWhatsApp={(product, qty = 1) => {
+              setModalItems([{ id: product.id, qty, product }]);
+              setOrderModalOpen(true);
+            }}
+          />
+        ) : null}
       </section>
 
       <section className="panel" style={{ padding: 0 }}>
@@ -79,6 +98,12 @@ function HomePage() {
       </section>
 
       <ReviewsSection targetId="shop" title="What our customers say about Soosai Hardwares" />
+
+      <WhatsAppOrderModal
+        isOpen={orderModalOpen}
+        onClose={() => setOrderModalOpen(false)}
+        items={modalItems}
+      />
     </div>
   );
 }

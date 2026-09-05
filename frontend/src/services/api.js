@@ -5,6 +5,17 @@ const API_BASE_URL =
 
 const cache = new Map();
 
+// Drop every cached catalogue read. Product and category mutations change what
+// the storefront should show, so leaving the 60s GET caches in place would let
+// an admin save a change and then keep seeing the old data.
+const invalidateCatalog = () => {
+  for (const key of cache.keys()) {
+    if (key.startsWith('/products') || key.startsWith('/categories')) {
+      cache.delete(key);
+    }
+  }
+};
+
 const parseJSON = async (response) => {
   try {
     return await response.json();
@@ -72,11 +83,11 @@ export const api = {
     request('/categories', {
       method: 'POST',
       body: JSON.stringify(body),
-    }),
+    }).finally(invalidateCatalog),
   deleteCategory: (id) =>
     request(`/categories/${id}`, {
       method: 'DELETE',
-    }),
+    }).finally(invalidateCatalog),
 
   getProducts: async (query = '') => {
     const cacheKey = `/products${query}`;
@@ -98,16 +109,16 @@ export const api = {
     request('/products', {
       method: 'POST',
       body: formData,
-    }),
+    }).finally(invalidateCatalog),
   updateProduct: (id, formData) =>
     request(`/products/${id}`, {
       method: 'PUT',
       body: formData,
-    }),
+    }).finally(invalidateCatalog),
   deleteProduct: (id) =>
     request(`/products/${id}`, {
       method: 'DELETE',
-    }),
+    }).finally(invalidateCatalog),
 
   getReviews: (productId) => request(`/reviews/${productId}`),
   createReview: (productId, body) =>

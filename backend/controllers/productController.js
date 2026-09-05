@@ -325,9 +325,6 @@ const createProduct = asyncHandler(async (req, res) => {
 
   const image = req.cloudinaryUrl || '';
 
-  cache.clear(); // Clear cache when new product is created
-  invalidateSitemapCache(); // Refresh sitemap
-
   // Create product
   const product = await Product.create({
     name: name.trim(),
@@ -341,6 +338,11 @@ const createProduct = asyncHandler(async (req, res) => {
     is_active: isActive !== 'false',
     is_featured: isFeatured === 'true',
   });
+
+  // Invalidate after the write lands, so a concurrent read cannot repopulate
+  // the cache with pre-write data in the gap.
+  cache.clear();
+  invalidateSitemapCache();
 
   logger.info(`Product created: ${product.id} - ${product.name}`);
 
@@ -473,10 +475,11 @@ const updateProduct = asyncHandler(async (req, res) => {
     updates.image = req.cloudinaryUrl;
   }
 
-  cache.clear(); // Clear cache when product is updated
-  invalidateSitemapCache(); // Refresh sitemap
-
   const updatedProduct = await Product.update(productId, updates);
+
+  // Invalidate after the write lands, not before.
+  cache.clear();
+  invalidateSitemapCache();
 
   logger.info(`Product updated: ${productId}`);
 
@@ -540,10 +543,11 @@ const deleteProduct = asyncHandler(async (req, res) => {
     }
   }
 
-  cache.clear(); // Clear cache when product is deleted
-  invalidateSitemapCache(); // Refresh sitemap
-
   await Product.delete(productId);
+
+  // Invalidate after the write lands, not before.
+  cache.clear();
+  invalidateSitemapCache();
 
   logger.info(`Product deleted: ${productId}`);
 

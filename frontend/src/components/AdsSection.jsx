@@ -18,7 +18,14 @@ function AdMedia({ ad }) {
     );
   }
 
-  return <img src={toMediaUrl(ad.mediaUrl)} alt={ad.title || 'Advertisement'} />;
+  return (
+    <img
+      src={toMediaUrl(ad.mediaUrl)}
+      alt={ad.title || 'Store promotion'}
+      loading="lazy"
+      decoding="async"
+    />
+  );
 }
 
 function AdsSection() {
@@ -63,7 +70,7 @@ function AdsSection() {
     <AnimatePresence mode="wait">
       <motion.div
         key={activeAd.id}
-        className="ads-carousel-slide"
+        className="promo-carousel-slide"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -76,11 +83,11 @@ function AdsSection() {
 
   return (
     <section
-      className="ads-section"
+      className="promo-section"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="ads-carousel">
+      <div className="promo-carousel">
         {activeAd.linkUrl ? (
           <a href={activeAd.linkUrl} target="_blank" rel="noopener noreferrer">
             {media}
@@ -91,13 +98,13 @@ function AdsSection() {
       </div>
 
       {ads.length > 1 ? (
-        <div className="ads-dots">
+        <div className="promo-dots">
           {ads.map((ad, index) => (
             <button
               key={ad.id}
               type="button"
-              className={`ads-dot ${index === activeIndex ? 'active' : ''}`}
-              aria-label={`Show advertisement ${index + 1}`}
+              className={`promo-dot ${index === activeIndex ? 'active' : ''}`}
+              aria-label={`Show promotion ${index + 1}`}
               onClick={() => setActiveIndex(index)}
             />
           ))}

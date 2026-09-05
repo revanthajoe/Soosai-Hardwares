@@ -7,11 +7,8 @@ import Pagination from '../components/catalog/Pagination';
 import Loader from '../components/common/Loader';
 import Alert from '../components/common/Alert';
 import WhatsAppOrderModal from '../components/WhatsAppOrderModal';
-import { loadJSON, saveJSON, subscribeStorage } from '../utils/storage';
+import { useShoppingLists } from '../hooks/useShoppingLists';
 
-const WISHLIST_KEY = 'soosai:wishlist';
-const COMPARE_KEY = 'soosai:compare';
-const CART_KEY = 'soosai:cart';
 const PER_PAGE = 9;
 
 function ProductsPage() {
@@ -19,9 +16,18 @@ function ProductsPage() {
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [wishlistIds, setWishlistIds] = useState([]);
-  const [compareIds, setCompareIds] = useState([]);
-  const [cartItems, setCartItems] = useState([]);
+  const {
+    wishlistItems,
+    wishlistIds,
+    compareItems,
+    compareIds,
+    cartItems,
+    toggleWishlist,
+    toggleCompare,
+    clearCompare,
+    addToCart,
+    removeFromCart,
+  } = useShoppingLists();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [orderModalOpen, setOrderModalOpen] = useState(false);
@@ -45,12 +51,6 @@ function ProductsPage() {
       if (!('page' in newFilters)) params.set('page', '1');
     }
     setSearchParams(params);
-  };
-
-  const refreshLocalState = () => {
-    setWishlistIds(loadJSON(WISHLIST_KEY, []));
-    setCompareIds(loadJSON(COMPARE_KEY, []));
-    setCartItems(loadJSON(CART_KEY, []));
   };
 
   useEffect(() => {
@@ -78,6 +78,9 @@ function ProductsPage() {
     let ignore = false;
     const loadProducts = async () => {
       setLoading(true);
+      // Clear any previous failure, otherwise the grid stays hidden forever
+      // once a single request has failed.
+      setError('');
       try {
         const query = new URLSearchParams();
         if (search) query.set('q', search);
@@ -105,60 +108,6 @@ function ProductsPage() {
     return () => { ignore = true; };
   }, [search, category, brand, sortBy, page]);
 
-  useEffect(() => {
-    refreshLocalState();
-    return subscribeStorage((key) => {
-      if ([WISHLIST_KEY, COMPARE_KEY, CART_KEY].includes(key)) {
-        refreshLocalState();
-      }
-    });
-  }, []);
-
-
-
-  const handleToggleWishlist = (product) => {
-    const next = wishlistIds.includes(product.id)
-      ? wishlistIds.filter((id) => id !== product.id)
-      : [...wishlistIds, product.id];
-    saveJSON(WISHLIST_KEY, next);
-  };
-
-  const handleToggleCompare = (product) => {
-    if (compareIds.includes(product.id)) {
-      saveJSON(COMPARE_KEY, compareIds.filter((id) => id !== product.id));
-      return;
-    }
-
-    if (compareIds.length >= 3) return;
-    saveJSON(COMPARE_KEY, [...compareIds, product.id]);
-  };
-
-  const handleAddToCart = (product, qty) => {
-    const current = [...cartItems];
-    const index = current.findIndex((item) => item.id === product.id);
-    if (index >= 0) {
-      current[index] = {
-        ...current[index],
-        qty: current[index].qty + qty,
-      };
-    } else {
-      current.push({ id: product.id, qty, product });
-    }
-    saveJSON(CART_KEY, current);
-  };
-
-  const handleRemoveFromCart = (id) => {
-    saveJSON(CART_KEY, cartItems.filter((item) => item.id !== id));
-  };
-
-  const compareItems = compareIds
-    .map((id) => products.find((item) => item.id === id))
-    .filter(Boolean);
-
-  const wishlistItems = wishlistIds
-    .map((id) => products.find((item) => item.id === id))
-    .filter(Boolean);
-
   return (
     <div className="container page-gap">
       <section className="panel">
@@ -184,7 +133,7 @@ function ProductsPage() {
                     <button
                       type="button"
                       className="ghost"
-                      onClick={() => handleToggleWishlist(item)}
+                      onClick={() => toggleWishlist(item)}
                     >
                       Remove
                     </button>
@@ -206,7 +155,7 @@ function ProductsPage() {
                     <button
                       type="button"
                       className="ghost"
-                      onClick={() => handleRemoveFromCart(item.id)}
+                      onClick={() => removeFromCart(item.id)}
                     >
                       Remove
                     </button>
@@ -240,9 +189,9 @@ function ProductsPage() {
               wishlistIds={wishlistIds}
               compareIds={compareIds}
               canCompare={compareIds.length < 3}
-              onToggleWishlist={handleToggleWishlist}
-              onToggleCompare={handleToggleCompare}
-              onAddToCart={handleAddToCart}
+              onToggleWishlist={toggleWishlist}
+              onToggleCompare={toggleCompare}
+              onAddToCart={addToCart}
               onOrderWhatsApp={(product) => {
                 setModalItems([{ id: product.id, qty: 1, product }]);
                 setOrderModalOpen(true);
@@ -256,7 +205,7 @@ function ProductsPage() {
           <section className="panel compare-panel">
             <div className="toolbar">
               <h3>Compare Products</h3>
-              <button type="button" className="ghost" onClick={() => saveJSON(COMPARE_KEY, [])}>
+              <button type="button" className="ghost" onClick={clearCompare}>
                 Clear
               </button>
             </div>

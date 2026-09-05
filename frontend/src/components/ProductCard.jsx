@@ -1,15 +1,10 @@
 import { Link } from 'react-router-dom';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { toMediaUrl } from '../services/media';
 
-const WHATSAPP_NUMBER = import.meta.env.VITE_WHATSAPP_NUMBER || '919842123380';
-
-
-
 function ProductCard({
   product,
-  whatsappNumber = WHATSAPP_NUMBER,
   index = 0,
   isWishlisted = false,
   isCompared = false,
@@ -23,19 +18,16 @@ function ProductCard({
   const [isHovered, setIsHovered] = useState(false);
   const productId = product.id;
 
-  const message = `Hello, I want to order:%0AProduct: ${product.name}%0AQuantity: ${qty} ${
-    product.unit || 'piece'
-  }%0A%0APlease check the exact pricing and availability.`;
-  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${message}`;
-
   const variants = {
     hidden: { opacity: 0, y: 20 },
     visible: {
       opacity: 1,
       y: 0,
       transition: {
-        delay: index * 0.1,
-        duration: 0.5,
+        // Cap the stagger: an uncapped index * 0.1 left the last card of a
+        // full page still fading in almost a second after everything else.
+        delay: Math.min(index, 5) * 0.05,
+        duration: 0.35,
       },
     },
   };
@@ -92,7 +84,15 @@ function ProductCard({
           animate={{ scale: isHovered ? 1.05 : 1 }}
           transition={{ duration: 0.3 }}
         >
-          <img className="product-image" src={toMediaUrl(product.image)} alt={product.name} />
+          <img
+            className="product-image"
+            src={toMediaUrl(product.image)}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            width="400"
+            height="400"
+          />
         </motion.div>
       ) : null}
 

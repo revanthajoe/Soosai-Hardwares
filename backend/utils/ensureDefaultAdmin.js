@@ -1,8 +1,19 @@
 const { User } = require('../models');
 
 const ensureDefaultAdmin = async () => {
-  const username = process.env.ADMIN_USERNAME || 'admin';
-  const password = process.env.ADMIN_PASSWORD || 'Revanth2006';
+  const username = process.env.ADMIN_USERNAME;
+  const password = process.env.ADMIN_PASSWORD;
+
+  // Never seed an account with a built-in password. If these are unset there
+  // is nothing safe to create, so skip and let the operator provision the
+  // admin explicitly.
+  if (!username || !password) {
+    console.warn(
+      'ADMIN_USERNAME/ADMIN_PASSWORD not set - skipping default admin creation. ' +
+        'Set both env vars (or create the admin via the Supabase SQL Editor) to enable admin login.'
+    );
+    return;
+  }
 
   try {
     const existing = await User.findByUsername(username);

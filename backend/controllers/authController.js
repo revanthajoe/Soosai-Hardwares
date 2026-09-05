@@ -71,11 +71,13 @@ const loginAdmin = asyncHandler(async (req, res) => {
     });
   }
 
-  // Check against Environment variables first (Bypasses DB/RLS)
-  const envUser = process.env.ADMIN_USERNAME || 'admin';
-  const envPass = process.env.ADMIN_PASSWORD || 'Revanth2006';
+  // Check against Environment variables first (Bypasses DB/RLS).
+  // No literal fallbacks: if these are unset the env path is skipped
+  // entirely and login falls through to the database user lookup.
+  const envUser = process.env.ADMIN_USERNAME;
+  const envPass = process.env.ADMIN_PASSWORD;
 
-  if (username === envUser && password === envPass) {
+  if (envUser && envPass && username === envUser && password === envPass) {
     const token = generateToken({ id: 1, role: 'admin' });
     logger.info(`Successful login via ENV credentials: ${username}`);
     return res.status(200).json({

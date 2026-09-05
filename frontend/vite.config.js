@@ -24,15 +24,23 @@ export default defineConfig({
     },
     rollupOptions: {
       output: {
+        // Order matters: these are substring tests, so the most specific
+        // package names must be checked first. Testing 'node_modules/react'
+        // before 'node_modules/react-router-dom' would swallow the router
+        // (and react-dom) into vendor-react and the router chunk would never
+        // be emitted at all.
         manualChunks: (id) => {
-          if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-            return 'vendor-react';
-          }
-          if (id.includes('node_modules/react-router-dom')) {
+          if (id.includes('node_modules/react-router')) {
             return 'vendor-router';
           }
           if (id.includes('node_modules/framer-motion')) {
             return 'vendor-motion';
+          }
+          if (id.includes('node_modules/recharts') || id.includes('node_modules/d3-')) {
+            return 'vendor-charts';
+          }
+          if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            return 'vendor-react';
           }
         },
       },

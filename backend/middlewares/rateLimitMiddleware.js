@@ -13,8 +13,10 @@ const apiLimiter = rateLimit({
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers
   skip: (req) => {
-    // Skip health checks
-    return req.path === '/api/health';
+    // Skip health checks. This limiter is mounted at '/api/', so req.path is
+    // already stripped of that prefix — compare against '/health', not
+    // '/api/health', or the skip never matches and uptime pings burn quota.
+    return req.path === '/health';
   },
   keyGenerator: (req) => rateLimit.ipKeyGenerator(req),
 });
@@ -35,6 +37,14 @@ const resetLimiter = rateLimit({
   message: 'Too many password reset requests, please try again later.',
 });
 
+// Review submission is public (no auth), so it needs its own throttle to
+// stop automated spam from filling the reviews table.
+const reviewLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour
+  max: 10, // limit each IP to 10 review submissions per hour
+  message: 'Too many reviews submitted, please try again later.',
+});
+
 // File upload rate limiter
 const uploadLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
@@ -46,5 +56,6 @@ module.exports = {
   apiLimiter,
   authLimiter,
   resetLimiter,
+  reviewLimiter,
   uploadLimiter,
 };

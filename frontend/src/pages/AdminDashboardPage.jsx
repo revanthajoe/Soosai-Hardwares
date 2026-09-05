@@ -1,14 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../services/api';
 import Alert from '../components/common/Alert';
 import Loader from '../components/common/Loader';
 import { getStorageData, setStorageData } from '../utils/storage';
 import { toMediaUrl } from '../services/media';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+
+// Largest page size the products API will honour (see productController).
+const ADMIN_PAGE_SIZE = 200;
+
+// The admin list must show every product, including inactive ones, no matter
+// how large the catalogue grows. The API caps `limit` at 200, so page through
+// until the reported page count is exhausted rather than relying on a single
+// oversized request (which silently truncated the list at 200 before).
+const fetchAllProducts = async () => {
+  const first = await api.getProducts(`?activeOnly=false&limit=${ADMIN_PAGE_SIZE}&page=1`);
+  const totalPages = first.pagination?.pages || 1;
+
+  if (totalPages <= 1) return first.data || [];
+
+  const rest = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, i) =>
+      api.getProducts(`?activeOnly=false&limit=${ADMIN_PAGE_SIZE}&page=${i + 2}`)
+    )
+  );
+
+  return rest.reduce((all, res) => all.concat(res.data || []), first.data || []);
+};
 
 function AdminDashboardPage() {
   const [products, setProducts] = useState([]);
+  const [productSearch, setProductSearch] = useState('');
   const [categories, setCategories] = useState([]);
   const [newCategory, setNewCategory] = useState('');
   const [loading, setLoading] = useState(true);
@@ -23,21 +46,21 @@ function AdminDashboardPage() {
   const [analytics, setAnalytics] = useState({ visits: 0, whatsapp_orders: 0 });
   const [ads, setAds] = useState([]);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     setError('');
     setAnalyticsError('');
     setAdsError('');
 
     const [productResult, categoryResult, analyticsResult, adsResult] = await Promise.allSettled([
-      api.getProducts('?activeOnly=false&limit=200'),
+      fetchAllProducts(),
       api.getCategories(),
       api.getAnalytics(),
       api.getAdminAds(),
     ]);
 
     if (productResult.status === 'fulfilled' && categoryResult.status === 'fulfilled') {
-      setProducts(productResult.value.data || []);
+      setProducts(productResult.value || []);
       setCategories(categoryResult.value.data || []);
     } else {
       const failed = productResult.status === 'rejected' ? productResult.reason : categoryResult.reason;
@@ -66,16 +89,22 @@ function AdminDashboardPage() {
     ]));
 
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     void load();
-  }, []);
+  }, [load]);
 
   const addLog = (action) => {
-    const newLogs = [{ id: Date.now(), action, user: 'Admin', time: new Date().toISOString() }, ...activityLogs].slice(0, 50);
-    setActivityLogs(newLogs);
-    setStorageData('activityLogs', newLogs);
+    setActivityLogs((current) => {
+      const now = new Date();
+      const newLogs = [
+        { id: `${now.getTime()}-${action}`, action, user: 'Admin', time: now.toISOString() },
+        ...current,
+      ].slice(0, 50);
+      setStorageData('activityLogs', newLogs);
+      return newLogs;
+    });
   };
 
   const toggleOrderStatus = (orderId) => {
@@ -113,6 +142,33 @@ function AdminDashboardPage() {
     }
   };
 
+  // The full list is already in memory, so filtering client-side keeps this
+  // instant and needs no extra endpoint.
+  const visibleProducts = useMemo(() => {
+    const term = productSearch.trim().toLowerCase();
+    if (!term) return products;
+
+    return products.filter((product) =>
+      [product.name, product.brand, product.nickname, product.category?.name]
+        .filter(Boolean)
+        .some((field) => String(field).toLowerCase().includes(term))
+    );
+  }, [products, productSearch]);
+
+  const onToggleProductActive = async (product) => {
+    try {
+      const formData = new FormData();
+      formData.append('isActive', String(!product.isActive));
+      await api.updateProduct(product.id, formData);
+      addLog(`${product.isActive ? 'Hid' : 'Published'} product: ${product.name}`);
+      setProducts((current) =>
+        current.map((item) => (item.id === product.id ? { ...item, isActive: !product.isActive } : item))
+      );
+    } catch (err) {
+      setError(err.message || 'Product update failed.');
+    }
+  };
+
   const handleSelectProduct = (id) => {
     setSelectedProducts(prev => prev.includes(id) ? prev.filter(pId => pId !== id) : [...prev, id]);
   };
@@ -122,16 +178,17 @@ function AdminDashboardPage() {
     const ok = window.confirm(`Delete ${selectedProducts.length} selected products?`);
     if (!ok) return;
     
-    try {
-      for (const id of selectedProducts) {
-        await api.deleteProduct(id);
-      }
-      addLog(`Bulk deleted ${selectedProducts.length} products`);
-      setSelectedProducts([]);
-      await load();
-    } catch (err) {
-      setError(err.message || 'Bulk delete failed.');
+    const results = await Promise.allSettled(selectedProducts.map((id) => api.deleteProduct(id)));
+    const failed = results.filter((result) => result.status === 'rejected');
+
+    addLog(`Bulk deleted ${results.length - failed.length} products`);
+    setSelectedProducts([]);
+
+    if (failed.length) {
+      setError(`${failed.length} of ${results.length} deletions failed: ${failed[0].reason?.message || 'unknown error'}`);
     }
+
+    await load();
   };
 
   const onToggleAdActive = async (ad) => {
@@ -177,6 +234,7 @@ function AdminDashboardPage() {
     a.href = url;
     a.download = 'products_export.csv';
     a.click();
+    window.URL.revokeObjectURL(url);
     addLog('Exported products to CSV');
   };
 
@@ -226,12 +284,28 @@ function AdminDashboardPage() {
           </section>
 
           <section className="panel">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2>Products</h2>
-              {selectedProducts.length > 0 && (
-                <button className="small-btn danger" onClick={handleBulkDelete}>Delete Selected ({selectedProducts.length})</button>
-              )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', gap: '1rem', flexWrap: 'wrap' }}>
+              <h2 style={{ margin: 0 }}>Products</h2>
+              <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                <label htmlFor="productSearch" className="sr-only">Search products</label>
+                <input
+                  id="productSearch"
+                  type="search"
+                  value={productSearch}
+                  onChange={(e) => setProductSearch(e.target.value)}
+                  placeholder="Search name, brand, category..."
+                  style={{ minWidth: '260px' }}
+                />
+                {selectedProducts.length > 0 && (
+                  <button className="small-btn danger" onClick={handleBulkDelete}>Delete Selected ({selectedProducts.length})</button>
+                )}
+              </div>
             </div>
+            {!loading && !error ? (
+              <p className="muted" style={{ marginTop: 0, marginBottom: '1rem' }}>
+                Showing {visibleProducts.length} of {products.length} products
+              </p>
+            ) : null}
             {loading ? <Loader text="Loading products..." /> : null}
             {error ? <Alert type="error">{error}</Alert> : null}
             {!loading && !error ? (
@@ -240,29 +314,52 @@ function AdminDashboardPage() {
                   <thead>
                     <tr>
                       <th>
-                        <input type="checkbox" onChange={(e) => setSelectedProducts(e.target.checked ? products.map(p => p.id) : [])} checked={selectedProducts.length === products.length && products.length > 0} />
+                        <input
+                          type="checkbox"
+                          aria-label="Select all products"
+                          onChange={(e) => setSelectedProducts(e.target.checked ? visibleProducts.map(p => p.id) : [])}
+                          checked={visibleProducts.length > 0 && visibleProducts.every(p => selectedProducts.includes(p.id))}
+                        />
                       </th>
                       <th>Name</th>
                       <th>Category</th>
-
+                      <th>Status</th>
                       <th>Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {products.map((product) => (
+                    {visibleProducts.map((product) => (
                       <tr key={product.id}>
                         <td>
-                          <input type="checkbox" checked={selectedProducts.includes(product.id)} onChange={() => handleSelectProduct(product.id)} />
+                          <input type="checkbox" aria-label={`Select ${product.name}`} checked={selectedProducts.includes(product.id)} onChange={() => handleSelectProduct(product.id)} />
                         </td>
                         <td>{product.name}</td>
                         <td>{product.category?.name || '-'}</td>
-
+                        <td>
+                          <button
+                            type="button"
+                            className={`status-badge ${product.isActive ? 'is-active' : 'is-hidden'}`}
+                            onClick={() => onToggleProductActive(product)}
+                            title={product.isActive ? 'Visible on the storefront - click to hide' : 'Hidden from the storefront - click to publish'}
+                          >
+                            {product.isActive ? 'Active' : 'Hidden'}
+                          </button>
+                        </td>
                         <td className="action-row">
                           <Link className="small-btn" to={`/admin/products/${product.id}/edit`}>Edit</Link>
                           <button type="button" className="small-btn danger" onClick={() => onDeleteProduct(product.id)}>Delete</button>
                         </td>
                       </tr>
                     ))}
+                    {visibleProducts.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="muted" style={{ textAlign: 'center', padding: '2rem' }}>
+                          {products.length === 0
+                            ? 'No products yet.'
+                            : `No products match "${productSearch}".`}
+                        </td>
+                      </tr>
+                    ) : null}
                   </tbody>
                 </table>
               </div>

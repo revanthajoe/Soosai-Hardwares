@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { api } from '../services/api';
 
-export default function ReviewsSection({ targetId = 'shop', title = 'Customer Reviews' }) {
+export default function ReviewsSection({ targetId = 'shop', title = 'Customer Reviews', onStatsChange }) {
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(0);
   const [loading, setLoading] = useState(true);
@@ -10,21 +10,25 @@ export default function ReviewsSection({ targetId = 'shop', title = 'Customer Re
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const res = await api.getReviews(targetId);
-      setReviews(res.data.reviews || []);
-      setAverageRating(res.data.averageRating || 0);
+      const list = res.data.reviews || [];
+      const average = res.data.averageRating || 0;
+      setReviews(list);
+      setAverageRating(average);
+      // Let the host page reuse these numbers instead of fetching them again.
+      onStatsChange?.({ count: list.length, averageRating: average });
     } catch (err) {
       console.error('Failed to fetch reviews:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [targetId, onStatsChange]);
 
   useEffect(() => {
     fetchReviews();
-  }, [targetId]);
+  }, [fetchReviews]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

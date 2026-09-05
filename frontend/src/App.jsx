@@ -1,5 +1,5 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { Suspense } from 'react';
+import { lazy, Suspense } from 'react';
 import { ThemeProvider } from './context/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/layout/Footer';
@@ -8,13 +8,17 @@ import ProtectedRoute from './components/admin/ProtectedRoute';
 import HomePage from './pages/HomePage';
 import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
-import AdminLoginPage from './pages/AdminLoginPage';
-import AdminDashboardPage from './pages/AdminDashboardPage';
-import ProductFormPage from './pages/ProductFormPage';
-import AdFormPage from './pages/AdFormPage';
 import NotFoundPage from './pages/NotFoundPage';
 import AnalyticsTracker from './components/AnalyticsTracker';
 import './App.css';
+
+// Admin screens are loaded on demand. Nothing here is reachable to a customer,
+// and the dashboard pulls in recharts, so keeping these eager put roughly a
+// third of the main bundle in front of every storefront visitor.
+const AdminLoginPage = lazy(() => import('./pages/AdminLoginPage'));
+const AdminDashboardPage = lazy(() => import('./pages/AdminDashboardPage'));
+const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
+const AdFormPage = lazy(() => import('./pages/AdFormPage'));
 
 function App() {
   return (

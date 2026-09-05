@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 
 function ProductList({
   products,
-  whatsappNumber,
   wishlistIds = [],
   compareIds = [],
   canCompare = true,
@@ -37,7 +36,6 @@ function ProductList({
         <ProductCard
           key={product.id}
           product={product}
-          whatsappNumber={whatsappNumber}
           index={index}
           isWishlisted={wishlistIds.includes(product.id)}
           isCompared={compareIds.includes(product.id)}

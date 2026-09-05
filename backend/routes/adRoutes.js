@@ -25,12 +25,12 @@ router.post(
   protect,
   uploadLimiter,
   uploadAdMedia.single('media'),
-  uploadAdToCloud,
   body('title').optional().trim(),
   body('linkUrl').optional().trim(),
   body('mediaUrl').optional({ checkFalsy: true }).trim().isURL().withMessage('mediaUrl must be a valid URL.'),
   body('mediaType').optional().isIn(['image', 'gif', 'video']),
   validateRequest,
+  uploadAdToCloud,
   createAd
 );
 
@@ -40,12 +40,12 @@ router.put(
   param('id').isInt({ min: 1 }).withMessage('Invalid advertisement id.'),
   uploadLimiter,
   uploadAdMedia.single('media'),
-  uploadAdToCloud,
   body('title').optional().trim(),
   body('linkUrl').optional().trim(),
   body('mediaUrl').optional({ checkFalsy: true }).trim().isURL().withMessage('mediaUrl must be a valid URL.'),
   body('mediaType').optional().isIn(['image', 'gif', 'video']),
   validateRequest,
+  uploadAdToCloud,
   updateAd
 );
 

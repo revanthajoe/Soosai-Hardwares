@@ -8,8 +8,13 @@ const { User } = require('../models');
 const run = async () => {
   await connectDB();
   
-  const username = 'Revanth';
-  const password = process.env.ADMIN_PASSWORD || 'Revanth_1108'; // Defaulting just in case
+  const username = process.env.ADMIN_USERNAME || 'Revanth';
+  const password = process.env.ADMIN_PASSWORD;
+
+  if (!password) {
+    console.error('ADMIN_PASSWORD is not set. Refusing to seed an admin with a default password.');
+    process.exit(1);
+  }
 
   try {
     const existing = await User.findByUsername(username);
