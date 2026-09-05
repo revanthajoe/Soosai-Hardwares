@@ -7,7 +7,8 @@ const multer = require('multer');
 const { uploadToCloudinary } = require('../config/cloudinary');
 
 const maxFileSize = Number(process.env.MAX_FILE_SIZE || 5 * 1024 * 1024);
-const maxVideoFileSize = Number(process.env.MAX_VIDEO_FILE_SIZE || 25 * 1024 * 1024);
+const maxAdImageFileSize = Number(process.env.MAX_AD_IMAGE_FILE_SIZE || 15 * 1024 * 1024);
+const maxVideoFileSize = Number(process.env.MAX_VIDEO_FILE_SIZE || 100 * 1024 * 1024);
 
 const VIDEO_TYPES = ['video/mp4', 'video/webm'];
 
@@ -37,6 +38,9 @@ const upload = multer({
   fileFilter,
 });
 
+// multer only supports a single fileSize ceiling per instance, so we set it to
+// the larger (video) limit here and enforce the smaller image/gif limit
+// manually in uploadAdToCloud, where the file's mimetype is known.
 const uploadAdMedia = multer({
   storage,
   limits: {
@@ -77,6 +81,16 @@ const uploadAdToCloud = async (req, res, next) => {
   try {
     if (!req.file) {
       return next();
+    }
+
+    const isVideo = VIDEO_TYPES.includes(req.file.mimetype);
+    const perTypeLimit = isVideo ? maxVideoFileSize : maxAdImageFileSize;
+    if (req.file.size > perTypeLimit) {
+      return res.status(400).json({
+        success: false,
+        message: `File too large. Max allowed is ${Math.round(perTypeLimit / (1024 * 1024))}MB for ${isVideo ? 'video' : 'image/GIF'} ads.`,
+        statusCode: 400,
+      });
     }
 
     const result = await uploadToCloudinary(req.file.buffer, {

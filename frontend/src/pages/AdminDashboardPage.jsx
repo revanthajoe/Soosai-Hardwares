@@ -30,7 +30,7 @@ function AdminDashboardPage() {
     setAdsError('');
 
     const [productResult, categoryResult, analyticsResult, adsResult] = await Promise.allSettled([
-      api.getProducts(),
+      api.getProducts('?activeOnly=false&limit=200'),
       api.getCategories(),
       api.getAnalytics(),
       api.getAdminAds(),

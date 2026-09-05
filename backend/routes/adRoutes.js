@@ -28,6 +28,8 @@ router.post(
   uploadAdToCloud,
   body('title').optional().trim(),
   body('linkUrl').optional().trim(),
+  body('mediaUrl').optional({ checkFalsy: true }).trim().isURL().withMessage('mediaUrl must be a valid URL.'),
+  body('mediaType').optional().isIn(['image', 'gif', 'video']),
   validateRequest,
   createAd
 );
@@ -41,6 +43,8 @@ router.put(
   uploadAdToCloud,
   body('title').optional().trim(),
   body('linkUrl').optional().trim(),
+  body('mediaUrl').optional({ checkFalsy: true }).trim().isURL().withMessage('mediaUrl must be a valid URL.'),
+  body('mediaType').optional().isIn(['image', 'gif', 'video']),
   validateRequest,
   updateAd
 );

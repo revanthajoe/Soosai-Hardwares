@@ -18,6 +18,15 @@ const mediaTypeFromMimetype = (mimetype) => {
   return 'image';
 };
 
+const mediaTypeFromUrl = (url) => {
+  const ext = (url.split('?')[0].split('.').pop() || '').toLowerCase();
+  if (['mp4', 'webm', 'mov', 'm4v'].includes(ext)) return 'video';
+  if (ext === 'gif') return 'gif';
+  return 'image';
+};
+
+const VALID_MEDIA_TYPES = ['image', 'gif', 'video'];
+
 const resourceTypeForMediaType = (mediaType) => (mediaType === 'video' ? 'video' : 'image');
 
 /**
@@ -91,23 +100,33 @@ const getAdminAds = asyncHandler(async (req, res) => {
  *         description: Validation error
  */
 const createAd = asyncHandler(async (req, res) => {
-  const { title, linkUrl } = req.body;
+  const { title, linkUrl, mediaUrl, mediaType: mediaTypeOverride } = req.body;
 
-  if (!req.cloudinaryUrl) {
+  let media_url;
+  let media_type;
+
+  if (req.cloudinaryUrl) {
+    media_url = req.cloudinaryUrl;
+    media_type = mediaTypeFromMimetype(req.file?.mimetype);
+  } else if (mediaUrl) {
+    media_url = mediaUrl.trim();
+    media_type = VALID_MEDIA_TYPES.includes(mediaTypeOverride)
+      ? mediaTypeOverride
+      : mediaTypeFromUrl(media_url);
+  } else {
     return res.status(400).json({
       success: false,
-      message: 'Media file is required.',
+      message: 'A media file or media URL is required.',
       statusCode: 400,
     });
   }
 
-  const mediaType = mediaTypeFromMimetype(req.file?.mimetype);
   const maxOrder = await Advertisement.getMaxDisplayOrder();
 
   const ad = await Advertisement.create({
     title: (title || '').trim(),
-    media_url: req.cloudinaryUrl,
-    media_type: mediaType,
+    media_url,
+    media_type,
     link_url: (linkUrl || '').trim() || null,
     display_order: maxOrder + 1,
     is_active: true,
@@ -161,7 +180,7 @@ const createAd = asyncHandler(async (req, res) => {
  */
 const updateAd = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { title, linkUrl, isActive } = req.body;
+  const { title, linkUrl, isActive, mediaUrl, mediaType: mediaTypeOverride } = req.body;
 
   const adId = parseInt(id);
   if (isNaN(adId)) {
@@ -186,7 +205,9 @@ const updateAd = asyncHandler(async (req, res) => {
   if (linkUrl !== undefined) updates.link_url = (linkUrl || '').trim() || null;
   if (isActive !== undefined) updates.is_active = isActive === 'true' || isActive === true;
 
-  if (req.cloudinaryUrl) {
+  const newMediaUrl = req.cloudinaryUrl || (mediaUrl ? mediaUrl.trim() : null);
+
+  if (newMediaUrl) {
     const oldPublicId = getPublicIdFromUrl(existingAd.mediaUrl);
     if (oldPublicId) {
       try {
@@ -196,8 +217,10 @@ const updateAd = asyncHandler(async (req, res) => {
         logger.warn(`Failed to delete old Cloudinary ad media: ${err.message}`);
       }
     }
-    updates.media_url = req.cloudinaryUrl;
-    updates.media_type = mediaTypeFromMimetype(req.file?.mimetype);
+    updates.media_url = newMediaUrl;
+    updates.media_type = req.cloudinaryUrl
+      ? mediaTypeFromMimetype(req.file?.mimetype)
+      : (VALID_MEDIA_TYPES.includes(mediaTypeOverride) ? mediaTypeOverride : mediaTypeFromUrl(newMediaUrl));
   }
 
   cache.clear();
