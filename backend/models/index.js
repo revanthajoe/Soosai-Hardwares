@@ -212,7 +212,12 @@ const Product = {
       .insert(productData)
       .select('*, categories!category_id(id, name, slug)')
       .single();
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new Error('Product create failed: no row returned from insert — check Supabase service role key and RLS policies');
+      }
+      throw error;
+    }
     return Product._reshape(data);
   },
 
@@ -225,7 +230,12 @@ const Product = {
       .eq('id', id)
       .select('*, categories!category_id(id, name, slug)')
       .single();
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        throw new Error('Product update failed: no row returned from update — check Supabase service role key and RLS policies');
+      }
+      throw error;
+    }
     return Product._reshape(data);
   },
 

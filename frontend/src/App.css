@@ -97,7 +97,7 @@
 }
 
 /* Advertisements */
-.promo-section { margin-bottom: 1.5rem; }
+.promo-section { margin-top: 1.5rem; margin-bottom: 1.5rem; }
 .promo-carousel {
   position: relative; width: 100%; aspect-ratio: 21 / 6;
   border-radius: 16px; overflow: hidden; box-shadow: var(--shadow);

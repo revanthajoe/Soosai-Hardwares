@@ -3,17 +3,17 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { api } from '../services/api';
 import { toMediaUrl } from '../services/media';
 
-const AUTOPLAY_MS = 5000;
+const IMAGE_AUTOPLAY_MS = 15000;
 
-function AdMedia({ ad }) {
+function AdMedia({ ad, onVideoEnded }) {
   if (ad.mediaType === 'video') {
     return (
       <video
         src={toMediaUrl(ad.mediaUrl)}
         autoPlay
         muted
-        loop
         playsInline
+        onEnded={onVideoEnded}
       />
     );
   }
@@ -48,23 +48,25 @@ function AdsSection() {
     void load();
   }, []);
 
+  const activeAd = ads[activeIndex] || ads[0];
+
+  const advance = () => {
+    setActiveIndex((current) => (current + 1) % ads.length);
+  };
+
   useEffect(() => {
-    if (ads.length <= 1 || paused) {
+    if (ads.length <= 1 || paused || activeAd?.mediaType === 'video') {
       return undefined;
     }
 
-    intervalRef.current = setInterval(() => {
-      setActiveIndex((current) => (current + 1) % ads.length);
-    }, AUTOPLAY_MS);
+    intervalRef.current = setInterval(advance, IMAGE_AUTOPLAY_MS);
 
     return () => clearInterval(intervalRef.current);
-  }, [ads.length, paused]);
+  }, [ads.length, paused, activeIndex, activeAd?.mediaType]);
 
   if (ads.length === 0) {
     return null;
   }
-
-  const activeAd = ads[activeIndex] || ads[0];
 
   const media = (
     <AnimatePresence mode="wait">
@@ -76,7 +78,7 @@ function AdsSection() {
         exit={{ opacity: 0 }}
         transition={{ duration: 0.4 }}
       >
-        <AdMedia ad={activeAd} />
+        <AdMedia ad={activeAd} onVideoEnded={ads.length > 1 ? advance : undefined} />
       </motion.div>
     </AnimatePresence>
   );
