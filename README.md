@@ -1,20 +1,21 @@
-# Soosai Hardwares - MERN Shop System
+# Soosai Hardwares - Hardware Shop System
 
-A complete MERN hardware shop system where:
+A complete hardware shop system where:
 
 - Admin logs in with JWT authentication
 - Admin adds/edits/deletes products from mobile or laptop
 - Admin captures product images directly from phone camera
-- Customers browse products and order through WhatsApp
+- Admin manages homepage advertisements (image/GIF/video carousel)
+- Customers browse products, leave reviews, and order through WhatsApp
 - UI is responsive and mobile-first
-- Deployment is supported on free tiers (Vercel + Render + PostgreSQL)
+- Deployment is supported on free tiers (Vercel + Render + Supabase)
 
 ## Tech Stack
 
 - Frontend: React + Vite + React Router (Vercel)
 - Backend: Node.js + Express (Render)
-- Database: PostgreSQL (Supabase)
-- Image Upload: Cloudinary
+- Database: PostgreSQL via Supabase (`@supabase/supabase-js`, RLS-enabled)
+- Image/Video Upload: Cloudinary
 - Auth: JWT
 
 ## Project Structure
@@ -39,12 +40,14 @@ A complete MERN hardware shop system where:
 
 ### Customer Side
 
-- Home page with featured products
+- Home page with featured products and an auto-advancing ad carousel
+  (images hold 15s each; videos play to completion before advancing)
 - Product listing page (grid)
 - Category filter
 - Brand filter
 - Search bar
 - Product detail page
+- Product & shop reviews
 - Stock indicators (In stock / Low stock / Out of stock)
 - WhatsApp order button with pre-filled message
 - Quantity selector before ordering
@@ -53,7 +56,8 @@ A complete MERN hardware shop system where:
 
 - Admin login (JWT)
 - Product CRUD
-- Category create
+- Category create/delete
+- Advertisement CRUD (image/GIF/video, drag-free up/down reorder)
 - Image upload
 - Stock management
 - Product listing dashboard
@@ -88,6 +92,23 @@ A complete MERN hardware shop system where:
 - POST /api/categories
 - DELETE /api/categories/:id
 
+### Advertisements
+
+- GET /api/ads
+- GET /api/ads/admin
+- POST /api/ads
+- PUT /api/ads/:id
+- PATCH /api/ads/:id/reorder
+- DELETE /api/ads/:id
+
+### Reviews
+
+- GET /api/reviews/shop
+- POST /api/reviews/shop
+- GET /api/reviews/:productId
+- POST /api/reviews/:productId
+- DELETE /api/reviews/:id
+
 ### Health
 
 - GET /api/health
@@ -97,22 +118,32 @@ A complete MERN hardware shop system where:
 ## 1. Prerequisites
 
 - Node.js 18+
-- PostgreSQL 14+ (local or hosted)
+- A Supabase project (Postgres + RLS)
+- A Cloudinary account (image/video uploads)
 
 ## 2. Environment Variables
 
 Copy:
 
-- .env.example to .env
 - backend/.env.example to backend/.env
 - frontend/.env.example to frontend/.env
 
-Important variables:
+Important backend variables:
 
 - DATABASE_URL
+- SUPABASE_URL
+- SUPABASE_SERVICE_KEY — **must be the `service_role` key from your Supabase
+  project's API settings, not the publishable/anon key.** The backend is the
+  only authorization gate (via JWT + the `protect` middleware); RLS grants
+  the `anon` role read-only access on all tables. Using the anon key here
+  will make writes (creating products, ads, etc.) fail with Postgres RLS
+  errors or `Cannot coerce the result to a single JSON object`.
+- CLOUDINARY_CLOUD_NAME / CLOUDINARY_API_KEY / CLOUDINARY_API_SECRET
 - JWT_SECRET
-- ADMIN_USERNAME
-- ADMIN_PASSWORD
+- ADMIN_USERNAME / ADMIN_PASSWORD
+
+Important frontend variables:
+
 - VITE_API_BASE_URL
 - VITE_WHATSAPP_NUMBER
 
@@ -145,46 +176,44 @@ Default URLs:
 - Frontend: http://localhost:5173
 - Backend: http://localhost:5000
 
-## Default Admin Credentials
+## Admin Credentials
 
-- Username: admin
-- Password: admin123
-
-You can change these in environment variables:
-
-- ADMIN_USERNAME
-- ADMIN_PASSWORD
+There are no built-in default credentials. Set `ADMIN_USERNAME` and
+`ADMIN_PASSWORD` in `backend/.env` to enable env-credential login; if either
+is unset, only database admin users (see `backend/scripts/seedAdmin.js`) can
+sign in.
 
 ## Deployment
 
 - **Frontend** → Vercel
 - **Backend** → Render
 - **Database** → Supabase
-- **Images** → Cloudinary
+- **Images/Video** → Cloudinary
+
+There is no CI/staging branch — pushing to `main` is the deploy for both
+Vercel and Render.
 
 ## Backend on Render (Free)
 
-Option A:
+Create a Web Service manually:
 
-- Use root render.yaml.
-- Create Blueprint service from repository.
-
-Option B:
-
-- Create a Web Service manually:
-  - Root directory: backend
-  - Build command: npm install
-  - Start command: npm start
-  - Add env vars:
-    - NODE_ENV=production
-    - DATABASE_URL
-    - PG_SSL=true
-    - DB_SYNC_ALTER=false
-    - JWT_SECRET
-    - JWT_EXPIRES_IN=7d
-    - CLIENT_URL=https://your-vercel-domain
-    - ADMIN_USERNAME
-    - ADMIN_PASSWORD
+- Root directory: backend
+- Build command: npm install
+- Start command: npm start
+- Add env vars:
+  - NODE_ENV=production
+  - DATABASE_URL
+  - SUPABASE_URL
+  - SUPABASE_SERVICE_KEY (the `service_role` key — see note above)
+  - PG_SSL=true
+  - CLOUDINARY_CLOUD_NAME
+  - CLOUDINARY_API_KEY
+  - CLOUDINARY_API_SECRET
+  - JWT_SECRET
+  - JWT_EXPIRES_IN=7d
+  - CLIENT_URL=https://your-vercel-domain
+  - ADMIN_USERNAME
+  - ADMIN_PASSWORD
 
 ## Frontend on Vercel (Free)
 
