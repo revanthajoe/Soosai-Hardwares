@@ -76,11 +76,11 @@ function HomePage() {
         ) : null}
       </section>
 
-      <section className="panel" style={{ padding: 0 }}>
-        <div className="toolbar" style={{ padding: '1rem 1rem 0' }}>
+      <section className="panel store-panel">
+        <div className="toolbar store-panel-header">
           <h2>Visit Our Store</h2>
         </div>
-        <div style={{ padding: '1rem' }}>
+        <div className="store-panel-body">
           <p style={{ marginBottom: '1rem' }}>
             15, Bypass Rd, opposite KR Fuels, Gomathy Nagar, Manimoortheeswaram, Tirunelveli, Tamil Nadu 627001
           </p>

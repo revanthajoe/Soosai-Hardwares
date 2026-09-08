@@ -245,7 +245,7 @@ function AdminDashboardPage() {
       <section className="panel">
         <div className="toolbar">
           <h1>Admin Dashboard</h1>
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
             <button onClick={handleExportCSV}>Export CSV</button>
             <Link to="/admin/products/new" className="button-link">Add Product</Link>
             <Link to="/admin/ads/new" className="button-link">Add Ad</Link>
