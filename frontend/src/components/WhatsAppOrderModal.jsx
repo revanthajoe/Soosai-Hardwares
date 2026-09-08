@@ -46,16 +46,16 @@ export default function WhatsAppOrderModal({ isOpen, onClose, items }) {
         </div>
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
           <div>
-            <label className="modal-label">Name *</label>
-            <input name="customerName" type="text" required autoComplete="name" placeholder="Your full name" />
+            <label className="modal-label" htmlFor="wa-customer-name">Name *</label>
+            <input id="wa-customer-name" name="customerName" type="text" required autoComplete="name" placeholder="Your full name" />
           </div>
           <div>
-            <label className="modal-label">Phone Number *</label>
-            <input name="phone" type="tel" required autoComplete="tel" placeholder="+91 98421 23380" />
+            <label className="modal-label" htmlFor="wa-phone">Phone Number *</label>
+            <input id="wa-phone" name="phone" type="tel" required autoComplete="tel" placeholder="+91 98421 23380" />
           </div>
           <div>
-            <label className="modal-label">Delivery Address *</label>
-            <textarea name="address" required rows="3" autoComplete="street-address" placeholder="Your delivery address"></textarea>
+            <label className="modal-label" htmlFor="wa-address">Delivery Address *</label>
+            <textarea id="wa-address" name="address" required rows="3" autoComplete="street-address" placeholder="Your delivery address"></textarea>
           </div>
           <div style={{ display: 'flex', gap: '0.8rem', marginTop: '0.5rem' }}>
             <button type="button" className="ghost" onClick={onClose} style={{ flex: 1 }}>Cancel</button>

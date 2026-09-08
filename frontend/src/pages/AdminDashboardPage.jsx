@@ -378,10 +378,11 @@ function AdminDashboardPage() {
                 {orders.map(o => (
                   <tr key={o.id} style={{ opacity: o.completed ? 0.6 : 1 }}>
                     <td>
-                      <input 
-                        type="checkbox" 
-                        checked={o.completed} 
-                        onChange={() => toggleOrderStatus(o.id)} 
+                      <input
+                        type="checkbox"
+                        checked={o.completed}
+                        onChange={() => toggleOrderStatus(o.id)}
+                        aria-label={`Mark order ${o.id} completed`}
                         style={{ transform: 'scale(1.3)', cursor: 'pointer', accentColor: 'var(--accent)' }}
                       />
                     </td>
@@ -470,7 +471,7 @@ function AdminDashboardPage() {
                       <td>{ad.title || '-'}</td>
                       <td>{ad.mediaType}</td>
                       <td>
-                        <input type="checkbox" checked={ad.isActive} onChange={() => onToggleAdActive(ad)} />
+                        <input type="checkbox" checked={ad.isActive} onChange={() => onToggleAdActive(ad)} aria-label={`Toggle ${ad.title || 'ad'} active`} />
                       </td>
                       <td className="action-row">
                         <button type="button" className="small-btn" disabled={index === 0} onClick={() => onReorderAd(ad.id, 'up')}>↑</button>

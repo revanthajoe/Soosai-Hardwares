@@ -166,7 +166,7 @@ function ProductFormPage() {
             onChange={(e) => updateField('description', e.target.value)}
           />
 
-          <label>Capture / Upload Image</label>
+          <label htmlFor="image">Capture / Upload Image</label>
           <div 
             className={`drop-zone ${isDragging ? 'dragging' : ''}`}
             onDragOver={handleDragOver}

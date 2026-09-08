@@ -68,7 +68,7 @@ export default function ReviewsSection({ targetId = 'shop', title = 'Customer Re
       </div>
 
       <div style={{ display: 'grid', gap: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-        <div className="review-list" style={{ maxHeight: '400px', overflowY: 'auto', paddingRight: '1rem' }}>
+        <div className="review-list">
           {loading ? (
             <p className="muted">Loading reviews...</p>
           ) : reviews.length === 0 ? (
@@ -94,18 +94,22 @@ export default function ReviewsSection({ targetId = 'shop', title = 'Customer Re
           
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1rem' }}>
             <div>
-              <label>Your Name</label>
-              <input 
-                required 
-                value={form.authorName} 
-                onChange={e => setForm({...form, authorName: e.target.value})} 
+              <label htmlFor="review-author-name">Your Name</label>
+              <input
+                id="review-author-name"
+                name="authorName"
+                required
+                value={form.authorName}
+                onChange={e => setForm({...form, authorName: e.target.value})}
                 placeholder="John Doe"
               />
             </div>
             <div>
-              <label>Rating</label>
-              <select 
-                value={form.rating} 
+              <label htmlFor="review-rating">Rating</label>
+              <select
+                id="review-rating"
+                name="rating"
+                value={form.rating}
                 onChange={e => setForm({...form, rating: Number(e.target.value)})}
               >
                 <option value="5">5 - Excellent</option>
@@ -116,11 +120,13 @@ export default function ReviewsSection({ targetId = 'shop', title = 'Customer Re
               </select>
             </div>
             <div>
-              <label>Comment (Optional)</label>
-              <textarea 
-                rows="3" 
-                value={form.comment} 
-                onChange={e => setForm({...form, comment: e.target.value})} 
+              <label htmlFor="review-comment">Comment (Optional)</label>
+              <textarea
+                id="review-comment"
+                name="comment"
+                rows="3"
+                value={form.comment}
+                onChange={e => setForm({...form, comment: e.target.value})}
                 placeholder="What did you like or dislike?"
               ></textarea>
             </div>

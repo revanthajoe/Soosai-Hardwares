@@ -13,7 +13,8 @@ function ProductFilters({
       <SearchBar value={search} onChange={setSearch} />
       <CategoryFilter categories={categories} value={category} onChange={setCategory} />
       
-      <select className="filter-select" value={brand} onChange={(e) => setBrand(e.target.value)}>
+      <label htmlFor="brand-filter" className="sr-only">Brand</label>
+      <select id="brand-filter" name="brand" className="filter-select" value={brand} onChange={(e) => setBrand(e.target.value)}>
         <option value="">All brands</option>
         {brands.map((value) => (
           <option key={value} value={value}>
@@ -21,8 +22,9 @@ function ProductFilters({
           </option>
         ))}
       </select>
-      
-      <select className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+
+      <label htmlFor="sort-filter" className="sr-only">Sort by</label>
+      <select id="sort-filter" name="sortBy" className="filter-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
         <option value="featured">Featured</option>
 
         <option value="newest">Newest Arrivals</option>

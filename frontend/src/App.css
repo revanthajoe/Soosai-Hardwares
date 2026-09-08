@@ -132,6 +132,8 @@
 .store-panel-header { padding: 1rem 1rem 0; }
 .store-panel-body { padding: 1rem; }
 
+.review-list { max-height: 400px; overflow-y: auto; padding-right: 1rem; }
+
 /* Grid */
 .grid.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
 
@@ -420,6 +422,9 @@ html { scroll-behavior: smooth; }
 
   .mobile-menu-btn { display: flex; align-items: center; justify-content: center; }
 
+  .top-nav { background: rgb(248, 255, 251); }
+  :root[data-theme="dark"] .top-nav { background: rgb(30, 35, 41); }
+
   .nav-links { display: none; }
   .mobile-drawer {
     position: fixed; top: 0; right: 0; bottom: 0; width: 85%; max-width: 320px;
@@ -463,6 +468,8 @@ html { scroll-behavior: smooth; }
   .store-panel-header { padding: 1.5rem 1.5rem 0; }
   .store-panel-body { padding: 1.5rem; }
   .store-panel-body iframe { max-height: 220px; }
+
+  .review-list { max-height: none; overflow-y: visible; padding-right: 0; }
 
   .toolbar { flex-direction: column; align-items: stretch; }
   .toolbar-controls { flex-direction: column; }

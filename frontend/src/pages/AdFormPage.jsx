@@ -151,7 +151,7 @@ function AdFormPage() {
             placeholder="https://..."
           />
 
-          <label>Advertisement Media</label>
+          <label htmlFor="media">Advertisement Media</label>
           <div className="tabs" style={{ marginBottom: '0.75rem' }}>
             <button type="button" onClick={() => setMediaMode('upload')} className={mediaMode === 'upload' ? 'active' : ''}>Upload File</button>
             <button type="button" onClick={() => setMediaMode('url')} className={mediaMode === 'url' ? 'active' : ''}>Paste URL</button>
