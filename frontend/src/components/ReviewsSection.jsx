@@ -56,10 +56,10 @@ export default function ReviewsSection({ targetId = 'shop', title = 'Customer Re
 
   return (
     <section className="panel" style={{ marginTop: '2rem' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+      <div className="reviews-header">
         <h2>{title}</h2>
         {averageRating > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div className="reviews-score">
             <span style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{averageRating}</span>
             <div>{renderStars(Math.round(averageRating))}</div>
             <span className="muted">({reviews.length})</span>
@@ -67,7 +67,7 @@ export default function ReviewsSection({ targetId = 'shop', title = 'Customer Re
         )}
       </div>
 
-      <div style={{ display: 'grid', gap: '2rem', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+      <div className="reviews-grid">
         <div className="review-list">
           {loading ? (
             <p className="muted">Loading reviews...</p>
@@ -87,7 +87,7 @@ export default function ReviewsSection({ targetId = 'shop', title = 'Customer Re
           )}
         </div>
 
-        <div className="review-form-container" style={{ background: 'var(--bg-secondary)', padding: '1.5rem', borderRadius: '12px' }}>
+        <div className="review-form-container">
           <h3>Write a Review</h3>
           {error && <div className="alert error">{error}</div>}
           {success && <div className="alert success" style={{ background: '#d8fbe8', color: '#0d6b43', padding: '0.65rem 0.8rem', borderRadius: '10px', marginBottom: '1rem' }}>{success}</div>}

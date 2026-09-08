@@ -117,8 +117,10 @@
   background: var(--border-color); cursor: pointer; transition: var(--transition);
 }
 .promo-dot.active { background: var(--accent); width: 20px; border-radius: 4px; }
-@media (max-width: 640px) {
-  .promo-carousel { aspect-ratio: 4 / 3; }
+@media (max-width: 768px) {
+  /* Wide banner ads crop far too aggressively at 4/3 - show the whole ad instead. */
+  .promo-carousel { aspect-ratio: 16 / 9; }
+  .promo-carousel-slide img, .promo-carousel-slide video { object-fit: contain; }
 }
 
 /* Panel & Cards */
@@ -132,7 +134,20 @@
 .store-panel-header { padding: 1rem 1rem 0; }
 .store-panel-body { padding: 1rem; }
 
+/* Reviews */
+.reviews-header {
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 1rem; margin-bottom: 1rem;
+}
+.reviews-header h2 { margin: 0; }
+.reviews-score { display: flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+/* min() keeps the 300px floor from overflowing containers narrower than 300px. */
+.reviews-grid {
+  display: grid; gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
+}
 .review-list { max-height: 400px; overflow-y: auto; padding-right: 1rem; }
+.review-form-container { background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; }
 
 /* Grid */
 .grid.two { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1rem; }
@@ -470,6 +485,14 @@ html { scroll-behavior: smooth; }
   .store-panel-body iframe { max-height: 220px; }
 
   .review-list { max-height: none; overflow-y: visible; padding-right: 0; }
+  .reviews-header { flex-direction: column; align-items: center; text-align: center; gap: 0.5rem; }
+  .reviews-grid { gap: 1.25rem; }
+  .review-form-container { padding: 1rem; }
+
+  /* Show the whole product rather than a heavily cropped centre. */
+  .product-image { object-fit: contain; }
+
+  .hero-actions > * { flex: 1 1 100%; text-align: center; justify-content: center; }
 
   .toolbar { flex-direction: column; align-items: stretch; }
   .toolbar-controls { flex-direction: column; }
@@ -480,7 +503,8 @@ html { scroll-behavior: smooth; }
   .card-actions { flex-direction: column; }
   .card-actions .ghost, .card-actions .wa-btn { width: 100%; }
 
-  button, .button-link, .wa-btn { min-height: 44px; }
+  /* .promo-dot is a <button>; the 44px floor would balloon the carousel dots. */
+  button:not(.promo-dot), .button-link, .wa-btn { min-height: 44px; }
 
   .tabs { gap: 0.2rem; }
   .tabs button { font-size: 0.8rem; padding: 0.4rem 0.6rem; }
