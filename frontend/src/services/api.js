@@ -24,6 +24,37 @@ const parseJSON = async (response) => {
   }
 };
 
+// The API is on a free Render instance that sleeps after ~15 min idle and takes
+// 50s+ to wake. A bare fetch has no timeout, so a cold start left every screen
+// stuck on "Loading..." forever with no feedback.
+const DEFAULT_TIMEOUT_MS = 20000;
+const COLD_START_TIMEOUT_MS = 45000;
+
+const COLD_START_MESSAGE =
+  'The server is waking up (free hosting sleeps when idle). Please try again in a moment.';
+
+const fetchWithTimeout = async (url, options, timeoutMs) => {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    return await fetch(url, { ...options, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+};
+
+// A timed-out or network-level failure is worth one more try on a sleeping
+// server; anything that actually reached the API is not.
+const isRetriableError = (error) =>
+  error?.name === 'AbortError' || error instanceof TypeError;
+
+const coldStartError = () => {
+  const error = new Error(COLD_START_MESSAGE);
+  error.isColdStart = true;
+  return error;
+};
+
 const request = async (path, options = {}) => {
   const headers = {
     ...(options.headers || {}),
@@ -38,10 +69,27 @@ const request = async (path, options = {}) => {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers,
-  });
+  const url = `${API_BASE_URL}${path}`;
+  const fetchOptions = { ...options, headers };
+  // Only idempotent reads may be retried - replaying a POST/PUT/DELETE that may
+  // already have been applied server-side would risk duplicate writes.
+  const method = (options.method || 'GET').toUpperCase();
+  const canRetry = method === 'GET';
+
+  let response;
+  try {
+    response = await fetchWithTimeout(url, fetchOptions, DEFAULT_TIMEOUT_MS);
+  } catch (error) {
+    if (!isRetriableError(error)) throw error;
+    if (!canRetry) throw coldStartError();
+
+    try {
+      response = await fetchWithTimeout(url, fetchOptions, COLD_START_TIMEOUT_MS);
+    } catch (retryError) {
+      if (!isRetriableError(retryError)) throw retryError;
+      throw coldStartError();
+    }
+  }
 
   const payload = await parseJSON(response);
 

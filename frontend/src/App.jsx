@@ -1,5 +1,6 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, useEffect } from 'react';
+import { api } from './services/api';
 import { ThemeProvider } from './context/ThemeContext';
 import ErrorBoundary from './components/ErrorBoundary';
 import Footer from './components/layout/Footer';
@@ -21,6 +22,13 @@ const ProductFormPage = lazy(() => import('./pages/ProductFormPage'));
 const AdFormPage = lazy(() => import('./pages/AdFormPage'));
 
 function App() {
+  // Start waking the sleeping Render instance immediately, so the real data
+  // requests are more likely to land on a warm server. Fire-and-forget: this
+  // must never throw or block the first paint.
+  useEffect(() => {
+    api.health().catch(() => {});
+  }, []);
+
   return (
     <ErrorBoundary>
       <ThemeProvider>

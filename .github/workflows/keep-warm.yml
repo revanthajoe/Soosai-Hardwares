@@ -1,0 +1,36 @@
+name: Keep backend warm
+
+# The API runs on Render's free tier, which spins the instance down after about
+# 15 minutes of inactivity and then takes 50s+ to cold start. Pinging the health
+# endpoint through the browsing day keeps it responsive for real visitors.
+#
+# Schedule is deliberately not 24/7: the free plan allows 750 instance-hours per
+# month, and ~17h/day works out to roughly 515h, leaving headroom for traffic.
+# The service is allowed to sleep overnight.
+on:
+  schedule:
+    # Every 10 minutes, 01:00-17:59 UTC == ~06:30-23:30 IST.
+    - cron: '*/10 1-17 * * *'
+  workflow_dispatch: {}
+
+# Never let a slow cold start pile up overlapping runs.
+concurrency:
+  group: keep-warm
+  cancel-in-progress: false
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Ping health endpoint
+        # --max-time is generous on purpose: if the instance has gone to sleep,
+        # this request has to wait out the cold start rather than give up and
+        # leave it asleep.
+        run: |
+          curl -fsS \
+            --max-time 90 \
+            --retry 3 \
+            --retry-delay 15 \
+            --retry-connrefused \
+            https://soosai-hardwares.onrender.com/api/health
