@@ -8,7 +8,9 @@ const rateLimit = require('express-rate-limit');
 // General API rate limiter
 const apiLimiter = rateLimit({
   windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || 900000), // 15 minutes
-  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || 100), // limit each IP to 100 requests per windowMs
+  // A single storefront page load fires roughly six requests, so the old
+  // ceiling of 100 throttled an ordinary shopper after ~16 page views.
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || 300),
   message: 'Too many requests from this IP, please try again later.',
   standardHeaders: true, // Return rate limit info in `RateLimit-*` headers
   legacyHeaders: false, // Disable `X-RateLimit-*` headers

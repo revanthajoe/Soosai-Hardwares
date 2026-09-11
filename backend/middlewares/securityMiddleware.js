@@ -62,6 +62,9 @@ const helmetConfig = helmet({
     includeSubDomains: true,
     preload: true,
   },
+  // Helmet defaults this to same-origin, which blocks the Vercel storefront
+  // from loading anything served out of /uploads on this origin.
+  crossOriginResourcePolicy: { policy: 'cross-origin' },
 });
 
 // Custom security headers

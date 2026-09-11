@@ -39,6 +39,13 @@ const { swaggerSetup } = require('./config/swagger');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Render terminates TLS at its edge and forwards over one hop, so without this
+// req.ip resolves to Render's proxy for every visitor - which would put all
+// users into a single shared rate-limit bucket. Trust exactly one hop: `true`
+// would let any client spoof X-Forwarded-For and evade the limiter entirely
+// (express-rate-limit refuses to start on that, ERR_ERL_PERMISSIVE_TRUST_PROXY).
+app.set('trust proxy', 1);
+
 // ========== SECURITY & COMPRESSION ==========
 app.use(helmetConfig);
 app.use(customSecurityHeaders);

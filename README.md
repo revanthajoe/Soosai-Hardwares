@@ -94,12 +94,12 @@ A complete hardware shop system where:
 
 ### Advertisements
 
-- GET /api/ads
-- GET /api/ads/admin
-- POST /api/ads
-- PUT /api/ads/:id
-- PATCH /api/ads/:id/reorder
-- DELETE /api/ads/:id
+- GET /api/promotions
+- GET /api/promotions/admin
+- POST /api/promotions
+- PUT /api/promotions/:id
+- PATCH /api/promotions/:id/reorder
+- DELETE /api/promotions/:id
 
 ### Reviews
 
